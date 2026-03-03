@@ -212,7 +212,10 @@ void parser_set_type(semantic_token_t *token) {
 
 // set the val of the member argv
 void parser_set_val(char *buf, semantic_token_t *token) {
+  if (token->buf != NULL)
+    free(token->buf);
   token->buf = strdup(buf);
+  printf("what is token->buf %s\n", token->buf);
 }
 
 // create official argc argv used with exec
@@ -253,7 +256,8 @@ void parse_tokens(char *buf, semantic_token_t **tokenv, size_t *argn) {
 
 // destroy args allocated with strdup
 void destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
-  for (int i = 0; i < tokenc; i++) {
+  printf("%zu\n", tokenc);
+  for (size_t i = 0; i < tokenc; i++) {
     if (tokenv[i] != NULL) {
       if (tokenv[i]->buf != NULL)
         // allocated by strdup at parse time
@@ -273,18 +277,11 @@ void destroy_args(size_t argc, char **argv) {
 }
 
 char *getval(char *k) {
-  char dummy[] = "1234";
-  char *p = malloc(strlen(dummy) + 1);
+  char *p = strdup("1234");
   if (p == NULL) {
     perror("no buffer when getting val");
     exit(NOBUFFER);
   }
-  int i = 0;
-  while (dummy[i] != '\0') {
-    p[i] = dummy[i];
-    i++;
-  }
-  p[i] = '\0';
   return p;
 }
 
@@ -344,9 +341,9 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
         break;
       }
       if (*token == '\0') {
-        puts(getval(key));
         // replace $x with actual value in token list
         (*tokenv)->buf = getval(key);
+        puts((*tokenv)->buf);
         state = DONE;
         break;
       }
@@ -464,17 +461,15 @@ void parser(char *c) {
 
   // handle builtins here
   if (strcmp(arg_vector[0], "exit") == MATCH)
-    exit(0);
+    exit(EXIT_SUCCESS);
   if (strcmp(arg_vector[0], "q") == MATCH)
-    exit(0);
+    exit(EXIT_SUCCESS);
 
   // iterator loop
   for (int i = 0; i < (iterator == 0 ? 1 : iterator); i++) {
-    if (strcmp(arg_vector[0], "echo") == MATCH) {
+    if (strcmp(arg_vector[0], "echo") == MATCH)
       echo(arg_count, arg_vector);
-    } else {
-      exec_command(arg_count, arg_vector);
-    }
+    exec_command(arg_count, arg_vector);
   }
   destroy_tokens(arg_count, token_vector);
   return;
