@@ -71,6 +71,7 @@ builtin_t builtins[MAX] = {
 // free and exit
 int fexit(size_t argc, void **argv) {
   destroy_tokens(argc, (semantic_token_t **)argv);
+  ; // hold here
   exit(EXIT_SUCCESS);
   return 0;
 }
@@ -223,7 +224,8 @@ int is_builtin(char *buf) {
     perror("no buffer is builtin");
     exit(ERRNOBUFFER);
   }
-  for (int i = 0; i < MAX; i++) {
+
+  for (int i = 0; i < MAX && builtins[i].name != NULL; i++) {
     if (strcmp(buf, builtins[i].name) == MATCH)
       return MATCH;
   }
