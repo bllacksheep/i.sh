@@ -13,12 +13,12 @@ typedef enum token {
 } semantic_type_t;
 
 enum ERRORS {
-  NOBYTES = 0,
-  NOBUFFER,
-  ITERSTATE,
-  NOEXPR,
-  ALLOC,
-  BUFFERINUSE,
+  ERRNOBYTES = 0,
+  ERRNOBUFFER,
+  ERRITERSTATE,
+  ERRNOEXPR,
+  ERRALLOC,
+  ERRBUFFERINUSE,
 };
 
 typedef struct semantic_token {
@@ -54,8 +54,8 @@ void destroy_args(size_t, char **);
 void parse_expr(size_t, semantic_token_t **);
 void parse_tokens(char *, semantic_token_t **, size_t *);
 void has_iterator(parse_state_t);
-void parser_set_type(semantic_token_t *token);
-void parser_set_val(char *buf, semantic_token_t *token);
+void parser_set_token_type(semantic_token_t *token);
+void parser_set_token_val(char *buf, semantic_token_t *token);
 int is_expression(char *buf);
 int is_command(char *buf);
 void tokenv_to_argv(size_t, char **, semantic_token_t **);
@@ -65,6 +65,7 @@ int fexit(size_t, void **);
 builtin_t builtins[MAX] = {
     {echo, "echo"},
     {fexit, "exit"},
+    {fexit, "q"},
 };
 
 // free and exit
@@ -99,7 +100,7 @@ void repl() {
 ssize_t read_input(char *buf) {
   if (buf == NULL) {
     perror("no input buffer");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   ssize_t n = read(STDIN_FILENO, buf, MAX);
   if (n == -1) {
@@ -108,9 +109,9 @@ ssize_t read_input(char *buf) {
   }
   if (n > 0)
     buf[n] = '\0';
-  if (n == NOBYTES) {
+  if (n == ERRNOBYTES) {
     perror("no bytes read from input");
-    return NOBYTES;
+    return ERRNOBYTES;
   }
   // newline in input command must be removed or break
   mystrcspn(&buf);
@@ -121,7 +122,7 @@ ssize_t read_input(char *buf) {
 size_t mylen(char **c) {
   if (c == NULL || *c == NULL) {
     perror("no buffer to take len");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   size_t len = 0;
   while (c[len] != NULL)
@@ -133,7 +134,7 @@ size_t mylen(char **c) {
 void mystrcspn(char **c) {
   if (c == NULL || *c == NULL) {
     perror("no buffer to remove '\n'");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   size_t len = 0;
   while ((*c)[len] != '\n')
@@ -146,11 +147,11 @@ void has_iterator(parse_state_t s) {
   if (s.keyword == NULL || s.cmd_buffer == NULL || *s.cmd_buffer == NULL ||
       s.iterator == NULL) {
     perror("no buffer to parse");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   if (*s.iterator != 0) {
     perror("iterator should always be 0 at start of parsing");
-    exit(ITERSTATE);
+    exit(ERRITERSTATE);
   }
   kw = s.keyword;
   for (int j = 0; j < s.kwlen; j++) {
@@ -169,11 +170,11 @@ void has_iterator(parse_state_t s) {
 void parse_iterator(char **buf, size_t *iter) {
   if (buf == NULL || *buf == NULL || iter == NULL) {
     perror("parse iterator");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   if (*iter != 0) {
     perror("iterator should always be 0");
-    exit(ITERSTATE);
+    exit(ERRITERSTATE);
   }
 
   char capture[MAX + 1] = {0};
@@ -206,7 +207,7 @@ void parse_iterator(char **buf, size_t *iter) {
 int is_expression(char *buf) {
   if (buf == NULL) {
     perror("no buffer in expression detection");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   // assume is at least an attempted expression
   while (*buf != '\0') {
@@ -217,21 +218,38 @@ int is_expression(char *buf) {
   return !MATCH;
 }
 
+int is_builtin(char *buf) {
+  if (buf == NULL) {
+    perror("no buffer is builtin");
+    exit(ERRNOBUFFER);
+  }
+  for (int i = 0; i < MAX; i++) {
+    if (strcmp(buf, builtins[i].name) == MATCH)
+      return MATCH;
+  }
+  return !MATCH;
+}
+
 // set the type of the member argv
-void parser_set_type(semantic_token_t *token) {
+void parser_set_token_type(semantic_token_t *token) {
   if (token->buf == NULL) {
     perror("no buffer when setting type");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   if (is_expression(token->buf) == MATCH) {
     token->type = EXPRESSION;
+    return;
   }
-  // assumed
+  if (is_builtin(token->buf) == MATCH) {
+    token->type = BUILTIN;
+    return;
+  }
   token->type = COMMAND;
+  return;
 }
 
 // set the val of the member argv
-void parser_set_val(char *buf, semantic_token_t *token) {
+void parser_set_token_val(char *buf, semantic_token_t *token) {
   if (token->buf != NULL)
     free(token->buf);
   token->buf = strdup(buf);
@@ -260,10 +278,10 @@ void parse_tokens(char *buf, semantic_token_t **tokenv, size_t *argn) {
     *token_vec = calloc(1, sizeof(semantic_token_t));
     if (*token_vec == NULL) {
       perror("alloc token");
-      exit(ALLOC);
+      exit(ERRALLOC);
     }
-    parser_set_val(capture, *token_vec);
-    parser_set_type(*token_vec);
+    parser_set_token_val(capture, *token_vec);
+    parser_set_token_type(*token_vec);
     // count arg
     argc++;
     // skip space
@@ -304,7 +322,7 @@ char *getval(char *k) {
   char *p = strdup("1234");
   if (p == NULL) {
     perror("no buffer when getting val");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   return p;
 }
@@ -313,11 +331,11 @@ char *getval(char *k) {
 void parse_expr(size_t argc, semantic_token_t **tokenv) {
   if (tokenv == NULL || *tokenv == NULL) {
     perror("no expression buffer");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   if (argc == 0) {
     perror("no expressions to parse");
-    exit(NOEXPR);
+    exit(ERRNOEXPR);
   }
 
   char key[MAX + 1] = {0};
@@ -339,7 +357,7 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
   for (int i = 0; *tokenv != NULL; i++) {
     if ((*tokenv)->buf == NULL) {
       perror("no buffer when setting idle parser state");
-      exit(NOBUFFER);
+      exit(ERRNOBUFFER);
     }
     switch (state) {
     case IDLE:
@@ -444,18 +462,18 @@ int echo(size_t argc, void **argv) {
 void tokenv_to_argv(size_t argc, char **argv, semantic_token_t **tokenv) {
   if (argv == NULL || tokenv == NULL) {
     perror("no buffer when creating arg vector");
-    exit(NOBUFFER);
+    exit(ERRNOBUFFER);
   }
   for (int i = 0; i < argc; i++) {
     // will fail due to last item being NULL
     if (argv[i] != NULL) {
       perror("arg vector pos should be empty");
-      exit(BUFFERINUSE);
+      exit(ERRBUFFERINUSE);
     }
 
     if (tokenv[i] == NULL || tokenv[i]->buf == NULL) {
       perror("no token or token value buffer when setting arg vector");
-      exit(NOBUFFER);
+      exit(ERRNOBUFFER);
     }
     // set pointer addresses of argv
     argv[i] = tokenv[i]->buf;
@@ -478,13 +496,9 @@ void parser(char *c) {
   // return or set argc, command must end with NULL see execv
   parse_tokens(c, token_vector, &arg_count);
   parse_expr(arg_count, token_vector);
-  /*
-  printf("num args %zu\n", arg_count);
-  printf("iterator %u\n", iterator);
-  fflush(stdout);
-  */
 
-  // needed?
+  // needed? *token type encoded in the vector pass back
+  // simplify below
   tokenv_to_argv(arg_count, arg_vector, token_vector);
 
   // handle builtins here
