@@ -52,7 +52,7 @@ void mystrcspn(char **c);
 void destroy_tokens(size_t, semantic_token_t **);
 void destroy_args(size_t, char **);
 void parse_expr(size_t, semantic_token_t **);
-void parse_tokens(char *, semantic_token_t **, size_t *);
+void parser_tokenize(char *, semantic_token_t **, size_t *);
 void has_iterator(parse_state_t);
 void parser_set_token_type(semantic_token_t *token);
 void parser_set_token_val(char *buf, semantic_token_t *token);
@@ -256,7 +256,7 @@ void parser_set_token_val(char *buf, semantic_token_t *token) {
 }
 
 // create official argc argv used with exec
-void parse_tokens(char *buf, semantic_token_t **tokenv, size_t *argn) {
+void parser_tokenize(char *buf, semantic_token_t **tokenv, size_t *argn) {
   if (buf == NULL || tokenv == NULL) {
     perror("parse args");
     exit(EXIT_FAILURE);
@@ -494,7 +494,7 @@ void parser(char *c) {
   parse_iterator(&c, &iterator);
   // by convention use cmd ... args ... NULL terminate in NULL
   // return or set argc, command must end with NULL see execv
-  parse_tokens(c, token_vector, &arg_count);
+  parser_tokenize(c, token_vector, &arg_count);
   parse_expr(arg_count, token_vector);
 
   // needed? *token type encoded in the vector pass back
@@ -509,12 +509,15 @@ void parser(char *c) {
 
   // iterator loop
   for (int i = 0; i < (iterator == 0 ? 1 : iterator); i++) {
-    if (strcmp(arg_vector[0], "echo") == MATCH)
+    if (strcmp(arg_vector[0], "echo") == MATCH) {
       // exec_command(COMMAND
       // exec_command(EXPRESSION
       // exec_command(BUILTIN
       exec_command(BUILTIN, arg_count, arg_vector);
+      break;
+    }
     exec_command(COMMAND, arg_count, arg_vector);
+    break;
   }
   destroy_tokens(arg_count, token_vector);
   return;
