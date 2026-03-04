@@ -354,82 +354,94 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
     DONE,
   } state = IDLE;
 
-  char *token = NULL;
+  char *curr_token_pos = NULL;
+  semantic_token_t **token_vec = tokenv;
 
-  for (int i = 0; *tokenv != NULL; i++) {
-    if ((*tokenv)->buf == NULL) {
+  for (int i = 0; *token_vec != NULL; i++) {
+    if ((*token_vec)->buf == NULL) {
       perror("no buffer when setting idle parser state");
       exit(ERRNOBUFFER);
     }
+
+    // walk tokens - resolve expression, skip the rest
+    while ((*token_vec)->type != EXPRESSION) {
+      token_vec++;
+      if (*token_vec == NULL)
+        // exhausted tokens at this point
+        return;
+    }
+
     switch (state) {
     case IDLE:
-      token = (*tokenv)->buf;
-      if (isalpha(*token)) {
-        key[i] = *token;
-        token++;
+      curr_token_pos = (*token_vec)->buf;
+      if (isalpha(*curr_token_pos)) {
+        key[i] = *curr_token_pos;
+        curr_token_pos++;
         state = CREATEKEY;
         break;
       }
-      if (*token == '$') {
-        token++;
-        key[i] = *token;
+      if (*curr_token_pos == '$') {
+        curr_token_pos++;
+        key[i] = *curr_token_pos;
         state = GETVALUE;
         break;
       }
       state = ERROR;
       break;
     case GETVALUE:
-      if (isalpha(*token)) {
-        key[i] = *token;
-        token++;
+      if (isalpha(*curr_token_pos)) {
+        key[i] = *curr_token_pos;
+        curr_token_pos++;
         break;
       }
-      if (*token == '\0') {
-        // replace $x with actual value in token list
-        (*tokenv)->buf = getval(key);
-        // puts((*tokenv)->buf);
+      if (*curr_token_pos == '\0') {
+        // currently set to input buffer now being resolved to value
+        if ((*token_vec)->buf != NULL)
+          free((*token_vec)->buf);
+        (*token_vec)->buf = getval(key);
         state = DONE;
         break;
       }
       break;
     case CREATEKEY:
-      if (isalpha(*token)) {
-        key[i] = *token;
-        token++;
+      if (isalpha(*curr_token_pos)) {
+        key[i] = *curr_token_pos;
+        curr_token_pos++;
         break;
       }
-      if (*token == '=') {
-        // add key to hash table
-        // puts(key);
+      if (*curr_token_pos == '=') {
+        // move to ins(k, v)
         // next increment will be to 0
         i = -1;
         state = CREATEVALUE;
         // skip '='
-        token++;
+        curr_token_pos++;
         break;
       }
-      if (*token == '$') {
+      if (*curr_token_pos == '$') {
         // feel like I need to reset key here
-        token++;
+        curr_token_pos++;
         state = GETVALUE;
       }
       state = ERROR;
       break;
     case CREATEVALUE:
-      if (isalpha(*token)) {
-        val[i] = *token;
-        token++;
+      if (isalpha(*curr_token_pos)) {
+        val[i] = *curr_token_pos;
+        curr_token_pos++;
         break;
       }
-      if (*token == '\0') {
+      if (*curr_token_pos == '\0') {
+        // retain shell session variable state here
         // add value to hash table
-        // puts(val);
+        // insert(key, val);
         state = NEXT;
         break;
       }
-      if (*token == '$') {
-        token++;
-        val[i] = *token;
+      // if $x then x should already be in ht
+      if (*curr_token_pos == '$') {
+        curr_token_pos++;
+        val[i] = *curr_token_pos;
         state = GETVALUE;
         break;
       }
@@ -441,7 +453,7 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
       i = -1;
       memset(key, 0, sizeof(key));
       memset(val, 0, sizeof(val));
-      tokenv++;
+      token_vec++;
       state = IDLE;
       break;
     case DONE:
