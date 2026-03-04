@@ -71,7 +71,6 @@ builtin_t builtins[MAX] = {
 // free and exit
 int fexit(size_t argc, void **argv) {
   destroy_tokens(argc, (semantic_token_t **)argv);
-  ; // hold here
   exit(EXIT_SUCCESS);
   return 0;
 }
@@ -89,6 +88,7 @@ void repl() {
       break;
     break;
   case 0:
+    perror("no bytes, strange should never happen...");
     return;
     break;
   default:
@@ -297,7 +297,6 @@ void parser_tokenize(char *buf, semantic_token_t **tokenv, size_t *argn) {
 
 // destroy args allocated with strdup
 void destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
-  // printf("%zu\n", tokenc);
   for (size_t i = 0; i < tokenc; i++) {
     if (tokenv[i] != NULL) {
       if (tokenv[i]->buf != NULL)
@@ -562,8 +561,10 @@ void exec_command(int type, size_t argc, char **argv) {
     default:
       // vp path aware
       if (execvp(argv[0], argv) == -1) {
-        perror("command not found");
+        perror("i.sh: command not found");
+        _exit(EXIT_FAILURE);
       };
+      exit(EXIT_SUCCESS);
       break;
     }
     break;
