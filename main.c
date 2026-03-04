@@ -9,6 +9,7 @@
 typedef enum token {
   EXPRESSION,
   COMMAND,
+  BUILTIN,
 } semantic_type_t;
 
 enum ERRORS {
@@ -29,11 +30,24 @@ enum parser_matching {
   MATCH = 0,
 };
 
+typedef struct builtin {
+  int (*builtin)(size_t, void *[]);
+  char *name;
+} builtin_t;
+
+typedef struct parse_state {
+  char *keyword;
+  char **cmd_buffer;
+  size_t *iterator;
+  size_t kwlen;
+  size_t scale;
+} parse_state_t;
+
 typedef struct parse_state parse_state_t;
 void parser(char *);
 ssize_t read_input(char *);
 void repl();
-void exec_command(size_t, char **);
+void exec_command(int, size_t, char **);
 void mystrcspn(char **c);
 void destroy_tokens(size_t, semantic_token_t **);
 void destroy_args(size_t, char **);
@@ -44,7 +58,21 @@ void parser_set_type(semantic_token_t *token);
 void parser_set_val(char *buf, semantic_token_t *token);
 int is_expression(char *buf);
 int is_command(char *buf);
-void create_arg_vector(size_t, char **, semantic_token_t **);
+void tokenv_to_argv(size_t, char **, semantic_token_t **);
+int echo(size_t, void **);
+int fexit(size_t, void **);
+
+builtin_t builtins[MAX] = {
+    {echo, "echo"},
+    {fexit, "exit"},
+};
+
+// free and exit
+int fexit(size_t argc, void **argv) {
+  destroy_tokens(argc, (semantic_token_t **)argv);
+  exit(EXIT_SUCCESS);
+  return 0;
+}
 
 void repl() {
   char input[MAX + 1] = {0};
@@ -112,14 +140,6 @@ void mystrcspn(char **c) {
     len++;
   (*c)[len] = '\0';
 }
-
-typedef struct parse_state {
-  char *keyword;
-  char **cmd_buffer;
-  size_t *iterator;
-  size_t kwlen;
-  size_t scale;
-} parse_state_t;
 
 void has_iterator(parse_state_t s) {
   char *kw;
@@ -215,7 +235,6 @@ void parser_set_val(char *buf, semantic_token_t *token) {
   if (token->buf != NULL)
     free(token->buf);
   token->buf = strdup(buf);
-  printf("what is token->buf %s\n", token->buf);
 }
 
 // create official argc argv used with exec
@@ -225,9 +244,9 @@ void parse_tokens(char *buf, semantic_token_t **tokenv, size_t *argn) {
     exit(EXIT_FAILURE);
   }
 
+  semantic_token_t **token_vec = tokenv;
   char capture[MAX + 1] = {0};
   char *p = buf;
-  semantic_token_t **token = tokenv;
   size_t argc = 0;
 
   while (*p != '\0') {
@@ -235,18 +254,22 @@ void parse_tokens(char *buf, semantic_token_t **tokenv, size_t *argn) {
       capture[i++] = *p;
     }
     // now that we have work bounded by ' ' or '\0' it's a token
-    *token = calloc(1, sizeof(semantic_token_t));
-    if (*token == NULL) {
+    if (*token_vec != NULL)
+      free(*token_vec);
+
+    *token_vec = calloc(1, sizeof(semantic_token_t));
+    if (*token_vec == NULL) {
       perror("alloc token");
       exit(ALLOC);
     }
-    parser_set_val(capture, *token);
-    parser_set_type(*token);
+    parser_set_val(capture, *token_vec);
+    parser_set_type(*token_vec);
+    // count arg
     argc++;
     // skip space
     p++;
-    // next slot
-    token++;
+    // next token
+    token_vec++;
     memset(capture, 0, sizeof(capture));
   }
   // set the last arg to NULL required by execv family of functions
@@ -256,7 +279,7 @@ void parse_tokens(char *buf, semantic_token_t **tokenv, size_t *argn) {
 
 // destroy args allocated with strdup
 void destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
-  printf("%zu\n", tokenc);
+  // printf("%zu\n", tokenc);
   for (size_t i = 0; i < tokenc; i++) {
     if (tokenv[i] != NULL) {
       if (tokenv[i]->buf != NULL)
@@ -344,7 +367,7 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
       if (*token == '\0') {
         // replace $x with actual value in token list
         (*tokenv)->buf = getval(key);
-        puts((*tokenv)->buf);
+        // puts((*tokenv)->buf);
         state = DONE;
         break;
       }
@@ -357,7 +380,7 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
       }
       if (*token == '=') {
         // add key to hash table
-        puts(key);
+        // puts(key);
         // next increment will be to 0
         i = -1;
         state = CREATEVALUE;
@@ -380,7 +403,7 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
       }
       if (*token == '\0') {
         // add value to hash table
-        puts(val);
+        // puts(val);
         state = NEXT;
         break;
       }
@@ -410,13 +433,15 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
   }
 }
 
-void echo(size_t argc, char **argv) {
+int echo(size_t argc, void **argv) {
+  char **args = (char **)argv;
   for (int i = 1; i < argc; i++)
-    printf("%s ", argv[i]);
+    printf("%s ", args[i]);
   putchar('\n');
+  return 0;
 }
 
-void create_arg_vector(size_t argc, char **argv, semantic_token_t **tokenv) {
+void tokenv_to_argv(size_t argc, char **argv, semantic_token_t **tokenv) {
   if (argv == NULL || tokenv == NULL) {
     perror("no buffer when creating arg vector");
     exit(NOBUFFER);
@@ -460,26 +485,29 @@ void parser(char *c) {
   */
 
   // needed?
-  create_arg_vector(arg_count, arg_vector, token_vector);
+  tokenv_to_argv(arg_count, arg_vector, token_vector);
 
   // handle builtins here
   if (strcmp(arg_vector[0], "exit") == MATCH)
-    exit(EXIT_SUCCESS);
+    fexit(arg_count, (void **)token_vector);
   if (strcmp(arg_vector[0], "q") == MATCH)
-    exit(EXIT_SUCCESS);
+    fexit(arg_count, (void **)token_vector);
 
   // iterator loop
   for (int i = 0; i < (iterator == 0 ? 1 : iterator); i++) {
     if (strcmp(arg_vector[0], "echo") == MATCH)
-      echo(arg_count, arg_vector);
-    exec_command(arg_count, arg_vector);
+      // exec_command(COMMAND
+      // exec_command(EXPRESSION
+      // exec_command(BUILTIN
+      exec_command(BUILTIN, arg_count, arg_vector);
+    exec_command(COMMAND, arg_count, arg_vector);
   }
   destroy_tokens(arg_count, token_vector);
   return;
 }
 
 // fork exec
-void exec_command(size_t argc, char **argv) {
+void exec_command(int type, size_t argc, char **argv) {
   pid_t pid;
   pid = fork();
 
@@ -489,8 +517,24 @@ void exec_command(size_t argc, char **argv) {
     exit(EXIT_FAILURE);
     break;
   case 0:
-    // vp path aware
-    execvp(argv[0], argv);
+    switch (type) {
+    case BUILTIN:
+      // do O(1) look up in hash table but talk for now
+      for (size_t i = 0; i < MAX; i++) {
+        if (builtins[i].name == argv[0])
+          builtins[i].builtin(argc, (void **)argv);
+      }
+      break;
+    case EXPRESSION:
+      echo(argc, (void **)argv);
+      break;
+    default:
+      // vp path aware
+      if (execvp(argv[0], argv) == -1) {
+        perror("command not found");
+      };
+      break;
+    }
     break;
   default:
     // in sys/wait.h
