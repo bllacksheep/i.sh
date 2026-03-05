@@ -1,4 +1,10 @@
 #include "ish.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 typedef enum token {
   EXPRESSION,
