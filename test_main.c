@@ -5,7 +5,7 @@
 void setUp(void) {}
 
 void tearDown(void) {}
-
+/*
 void simple_parser(char *);
 ssize_t read_input(char *);
 void repl();
@@ -23,7 +23,7 @@ int is_command(char *);
 void tokenv_to_argv(size_t, char **, semantic_token_t **);
 int echo(size_t, void **);
 int fexit(size_t, void **);
-
+*/
 void test_has_iterator_should_parse_out_iterators(void) {
   const char cmd[] = "7 <mycommand>";
   const char *input = cmd;
@@ -31,7 +31,8 @@ void test_has_iterator_should_parse_out_iterators(void) {
   parse_state_t state_1 = {
       .buf = &input, .kwlen = strnlen(input, 20), .iterator = iterator};
   has_iterator(state_1);
-  TEST_ASSERT_EQUAL(7, *iterator);
+  TEST_ASSERT_EQUAL_UINT(7, *iterator);
+  TEST_ASSERT_EQUAL_STRING("<mycommand>", input);
 }
 
 int main(void) {
