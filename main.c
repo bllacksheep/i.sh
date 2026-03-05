@@ -569,7 +569,7 @@ void exec_command(int type, size_t argc, char **argv) {
     }
     break;
   default:
-    // in sys/wait.h
+    // in sys/wait.h for the parent
     wait(NULL);
     break;
   }
