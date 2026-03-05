@@ -553,6 +553,7 @@ void exec_command(int type, size_t argc, char **argv) {
   }
 }
 
+#ifndef TEST
 int main(void) {
 
   while (1) {
@@ -561,3 +562,4 @@ int main(void) {
 
   return 0;
 }
+#endif
