@@ -24,21 +24,33 @@ void tokenv_to_argv(size_t, char **, semantic_token_t **);
 int echo(size_t, void **);
 int fexit(size_t, void **);
 */
-void test_has_iterator_should_parse_out_iterators(void) {
-  const char cmd[] = "7 <mycommand>";
-  const char *input = cmd;
+void test_has_iterator_should_parse_out_iterators_and_advance_buf(void) {
+  const char input[] = "7 <mycommand>";
+  const char *buf = input;
   size_t *iterator = 0;
-  parse_state_t state_1 = {
-      .buf = &input, .kwlen = strnlen(input, 20), .iterator = iterator};
-  has_iterator(state_1);
+  parse_state_t state = {
+      .buf = &buf, .kwlen = strnlen(buf, 20), .iterator = iterator};
+  has_iterator(state);
   TEST_ASSERT_EQUAL_UINT(7, *iterator);
-  TEST_ASSERT_EQUAL_STRING("<mycommand>", input);
+  TEST_ASSERT_EQUAL_STRING("<mycommand>", buf);
+}
+
+void test_has_iterator_should_ignore_buf(void) {
+  const char input[] = "<mycommand>";
+  const char *buf = input;
+  size_t *iterator = 0;
+  parse_state_t state = {
+      .buf = &buf, .kwlen = strnlen(buf, 20), .iterator = iterator};
+  has_iterator(state);
+  TEST_ASSERT_EQUAL_UINT(0, *iterator);
+  TEST_ASSERT_EQUAL_STRING("<mycommand>", buf);
 }
 
 int main(void) {
   UNITY_BEGIN();
 
-  RUN_TEST(test_has_iterator_should_parse_out_iterators);
+  RUN_TEST(test_has_iterator_should_parse_out_iterators_and_advance_buf);
+  RUN_TEST(test_has_iterator_should_ignore_buf);
 
   return UNITY_END();
 }
