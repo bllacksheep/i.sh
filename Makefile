@@ -1,9 +1,11 @@
-CC := gcc
-CFLAGS := -ggdb3 -O0
 PATHBD := build
 PATHBN := bin
+PATHUN := unity/src
+PATHRT := build/results
+CFLAGS := -I$(PATHUN) -ggdb3 -O0
+CC := gc
 EXE := i.sh
-PATHS := $(PATHBD) $(PATHBN)
+PATHS := $(PATHBD) $(PATHBN) $(PATHRT)
 
 .PHONY: setup all clean
 
@@ -16,4 +18,4 @@ setup:
 	mkdir -p $(PATHS)
 
 clean:
-	rm -rf $(PATHBN)/* $(PATHBD)/*
+	rm -rf $(PATHBN)/* $(PATHBD)/*.o $(PATHRT)/*
