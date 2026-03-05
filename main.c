@@ -35,8 +35,6 @@ typedef struct builtin {
   char *name;
 } builtin_t;
 
-typedef struct parse_state parse_state_t;
-
 builtin_t builtins[MAX] = {
     {echo, "echo"},
     {fexit, "exit"},
