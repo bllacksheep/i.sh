@@ -8,7 +8,14 @@ typedef struct semantic_token semantic_token_t;
 typedef struct builtin builtin_t;
 typedef struct parse_state parse_state_t;
 
-void simple_parser(char *);
+typedef struct parse_state {
+  char *keyword;
+  const char **buf;
+  size_t *iterator;
+  const size_t kwlen;
+} parse_state_t;
+
+void simple_parser(const char *);
 ssize_t read_input(char *);
 void repl();
 void exec_command(int, size_t, char **);
@@ -16,7 +23,8 @@ void mystrcspn(char **);
 void destroy_tokens(size_t, semantic_token_t **);
 void destroy_args(size_t, char **);
 void parse_expr(size_t, semantic_token_t **);
-void parser_tokenize(char *, semantic_token_t **, size_t *);
+void parse_iterator(const char **, size_t *);
+void parser_tokenize(const char *, semantic_token_t **, size_t *);
 void has_iterator(parse_state_t);
 void parser_set_token_type(semantic_token_t *);
 void parser_set_token_val(char *, semantic_token_t *);

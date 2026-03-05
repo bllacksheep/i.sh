@@ -35,32 +35,7 @@ typedef struct builtin {
   char *name;
 } builtin_t;
 
-typedef struct parse_state {
-  char *keyword;
-  char **cmd_buffer;
-  size_t *iterator;
-  size_t kwlen;
-  size_t scale;
-} parse_state_t;
-
 typedef struct parse_state parse_state_t;
-void simple_parser(char *);
-ssize_t read_input(char *);
-void repl();
-void exec_command(int, size_t, char **);
-void mystrcspn(char **c);
-void destroy_tokens(size_t, semantic_token_t **);
-void destroy_args(size_t, char **);
-void parse_expr(size_t, semantic_token_t **);
-void parser_tokenize(char *, semantic_token_t **, size_t *);
-void has_iterator(parse_state_t);
-void parser_set_token_type(semantic_token_t *token);
-void parser_set_token_val(char *buf, semantic_token_t *token);
-int is_expression(char *buf);
-int is_command(char *buf);
-void tokenv_to_argv(size_t, char **, semantic_token_t **);
-int echo(size_t, void **);
-int fexit(size_t, void **);
 
 builtin_t builtins[MAX] = {
     {echo, "echo"},
@@ -146,9 +121,9 @@ void mystrcspn(char **c) {
 // takes state but discards it, embedded in the state is a pointer "iter"
 // which when set, propagates back to the caller, even though
 // the rest of the data is destroyed on the stack frame
-void has_iterator(parse_state_t s) {
+void has_iterator(const parse_state_t s) {
   char *kw;
-  if (s.keyword == NULL || s.cmd_buffer == NULL || *s.cmd_buffer == NULL ||
+  if (s.keyword == NULL || s.buf == NULL || *s.buf == NULL ||
       s.iterator == NULL) {
     perror("no buffer to parse");
     exit(ERRNOBUFFER);
@@ -158,20 +133,21 @@ void has_iterator(parse_state_t s) {
     exit(ERRITERSTATE);
   }
   kw = s.keyword;
+  // convert each string '1' and '0' in "10" to decimal 10
   for (int j = 0; j < s.kwlen; j++) {
     if (kw[j] == '0' || kw[j] == '1' || kw[j] == '2' || kw[j] == '3' ||
         kw[j] == '4' || kw[j] == '5' || kw[j] == '6' || kw[j] == '7' ||
         kw[j] == '8' || kw[j] == '9') {
       *s.iterator = *s.iterator * 10 + (kw[j] - '0');
-      (*s.cmd_buffer)++;
-      s.scale++;
+      // walk command buffer past the iterator if exists
+      (*s.buf)++;
     }
   }
 }
 
 // parse out the number from the start of a command if exists
 // step the command pointer forward to pos arg 1 the actual command name
-void parse_iterator(char **buf, size_t *iter) {
+void parse_iterator(const char **buf, size_t *iter) {
   if (buf == NULL || *buf == NULL || iter == NULL) {
     perror("parse iterator");
     exit(ERRNOBUFFER);
@@ -182,18 +158,18 @@ void parse_iterator(char **buf, size_t *iter) {
   }
 
   char capture[MAX + 1] = {0};
-  char *p = *buf;
-  size_t i = 0, s = 0;
+  const char *p = *buf;
+  const char **input = buf;
+  size_t i = 0;
 
   for (; *p != ' ' && *p != '\0'; capture[i++] = *p++)
     ;
 
   parse_state_t state = {
       .keyword = capture,
-      .cmd_buffer = buf,
+      .buf = input,
       .iterator = iter,
       .kwlen = i,
-      .scale = s,
   };
 
   has_iterator(state);
@@ -256,7 +232,7 @@ void parser_set_token_val(char *buf, semantic_token_t *token) {
 }
 
 // create official argc argv used with exec
-void parser_tokenize(char *buf, semantic_token_t **tokenv, size_t *argn) {
+void parser_tokenize(const char *buf, semantic_token_t **tokenv, size_t *argn) {
   if (buf == NULL || tokenv == NULL) {
     perror("parse args");
     exit(EXIT_FAILURE);
@@ -264,7 +240,7 @@ void parser_tokenize(char *buf, semantic_token_t **tokenv, size_t *argn) {
 
   semantic_token_t **token_vec = tokenv;
   char capture[MAX + 1] = {0};
-  char *p = buf;
+  const char *p = buf;
   size_t argc = 0;
 
   while (*p != '\0') {
@@ -492,7 +468,7 @@ void tokenv_to_argv(size_t argc, char **argv, semantic_token_t **tokenv) {
 }
 
 // parser orchestroator pull together iterator + command + args
-void simple_parser(char *c) {
+void simple_parser(const char *buf) {
   // real parsing logic on c goes here
   size_t iterator = 0;
   size_t arg_count = 0;
@@ -502,10 +478,12 @@ void simple_parser(char *c) {
   // passed to exec command once references are resolved
   char *arg_vector[MAX] = {0};
 
-  parse_iterator(&c, &iterator);
+  const char *input = buf;
+
+  parse_iterator(&input, &iterator);
   // by convention use cmd ... args ... NULL terminate in NULL
   // return or set argc, command must end with NULL see execv
-  parser_tokenize(c, token_vector, &arg_count);
+  parser_tokenize(input, token_vector, &arg_count);
   parse_expr(arg_count, token_vector);
 
   // needed? *token type encoded in the vector pass back
