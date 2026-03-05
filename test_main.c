@@ -3,7 +3,6 @@
 #include <string.h>
 
 void setUp(void) {}
-
 void tearDown(void) {}
 /*
 void simple_parser(char *);
@@ -30,23 +29,34 @@ void test_has_iterator_should_parse_out_iterators_and_advance_buf(void) {
   // a "capture" is the potential iterator, captured as first word before ' '
   // this is done in the caller so provided here as separate
 
-  // "7 <mycommand>
-  const char capture[] = "7";
-  const char input[] = " <mycommand>";
+#define CASES 7
+  const int expected[CASES] = {0, 0, 1, 7, 10, 100, 432};
 
-  // char** are passed to avoid allocations
-  const char *buf = input;
-  const char *cap = capture;
+  // "7 <mycommand> split in caller
+  const char *cases[CASES][2] = {
+      {"<mycommand>", "<mycommand>"}, {"0", " <mycommand>"},
+      {"1", " <mycommand>"},          {"7", " <mycommand>"},
+      {"10", " <mycommand>"},         {"100", " <mycommand>"},
+      {"432", " <mycommand>"},
+  };
 
-  size_t iterator = 0;
+  for (int i = 0; i < CASES; i++) {
+    // char** are passed to avoid allocations
+    const char *cap = cases[i][0];
+    const char *buf = cases[i][1];
+    size_t iterator = 0;
 
-  parse_state_t state = {.capture = cap,
-                         .buf = &buf,
-                         .kwlen = strnlen(buf, 20),
-                         .iterator = &iterator};
-  has_iterator(state);
-  TEST_ASSERT_EQUAL_UINT(7, iterator);
-  TEST_ASSERT_EQUAL_STRING("<mycommand>", buf);
+    parse_state_t state = {.capture = cap,
+                           .buf = &buf,
+                           .kwlen = strnlen(cap, 20),
+                           .iterator = &iterator};
+
+    has_iterator(state);
+
+    TEST_ASSERT_EQUAL_UINT(expected[i], iterator);
+    puts(buf);
+    TEST_ASSERT_EQUAL_STRING("<mycommand>", buf);
+  }
 }
 
 void test_has_iterator_should_ignore_buf(void) {
