@@ -24,24 +24,28 @@ void tokenv_to_argv(size_t, char **, semantic_token_t **);
 int echo(size_t, void **);
 int fexit(size_t, void **);
 */
-void test_has_iterator_should_parse_out_iterators_and_advance_buf(void) {
-  const char input[] = "7 <mycommand>";
-  const char capture[] = "7";
 
-  // char** are passed to state avoid allocations
-  // a capture is a potential iterator, captured as first word before ' '
-  // this is done in the caller
+// walk the buffer past the iterator if present and convert iterator to decimal
+void test_has_iterator_should_parse_out_iterators_and_advance_buf(void) {
+  // a "capture" is the potential iterator, captured as first word before ' '
+  // this is done in the caller so provided here as separate
+
+  // "7 <mycommand>
+  const char capture[] = "7";
+  const char input[] = " <mycommand>";
+
+  // char** are passed to avoid allocations
   const char *buf = input;
   const char *cap = capture;
 
-  size_t *iterator = 0;
+  size_t iterator = 0;
 
   parse_state_t state = {.capture = cap,
                          .buf = &buf,
                          .kwlen = strnlen(buf, 20),
-                         .iterator = iterator};
+                         .iterator = &iterator};
   has_iterator(state);
-  TEST_ASSERT_EQUAL_UINT(7, *iterator);
+  TEST_ASSERT_EQUAL_UINT(7, iterator);
   TEST_ASSERT_EQUAL_STRING("<mycommand>", buf);
 }
 
