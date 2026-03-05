@@ -13,7 +13,7 @@ typedef enum token {
 } semantic_type_t;
 
 enum ERRORS {
-  ERRNOBYTES = 0,
+  ERRNOBYTES = 1,
   ERRNOBUFFER,
   ERRITERSTATE,
   ERRNOEXPR,
@@ -122,23 +122,29 @@ void mystrcspn(char **c) {
 // which when set, propagates back to the caller, even though
 // the rest of the data is destroyed on the stack frame
 void has_iterator(const parse_state_t s) {
-  char *kw;
-  if (s.keyword == NULL || s.buf == NULL || *s.buf == NULL ||
-      s.iterator == NULL) {
+  // the capture is the potential iterator, captured in the caller
+  if (s.capture == NULL || s.buf == NULL || *s.buf == NULL) {
     perror("no buffer to parse");
     exit(ERRNOBUFFER);
   }
-  if (*s.iterator != 0) {
-    perror("iterator should always be 0 at start of parsing");
+
+  if (s.iterator == NULL) {
+    perror("iterator should not be NULL");
     exit(ERRITERSTATE);
   }
-  kw = s.keyword;
+
+  if (*s.iterator != 0) {
+    perror("iterator value should always be 0 at start of parsing");
+    exit(ERRITERSTATE);
+  }
+
+  const char *it = s.capture;
   // convert each string '1' and '0' in "10" to decimal 10
   for (int j = 0; j < s.kwlen; j++) {
-    if (kw[j] == '0' || kw[j] == '1' || kw[j] == '2' || kw[j] == '3' ||
-        kw[j] == '4' || kw[j] == '5' || kw[j] == '6' || kw[j] == '7' ||
-        kw[j] == '8' || kw[j] == '9') {
-      *s.iterator = *s.iterator * 10 + (kw[j] - '0');
+    if (it[j] == '0' || it[j] == '1' || it[j] == '2' || it[j] == '3' ||
+        it[j] == '4' || it[j] == '5' || it[j] == '6' || it[j] == '7' ||
+        it[j] == '8' || it[j] == '9') {
+      *s.iterator = *s.iterator * 10 + (it[j] - '0');
       // walk command buffer past the iterator if exists
       (*s.buf)++;
     }
@@ -166,7 +172,7 @@ void parse_iterator(const char **buf, size_t *iter) {
     ;
 
   parse_state_t state = {
-      .keyword = capture,
+      .capture = capture,
       .buf = input,
       .iterator = iter,
       .kwlen = i,
