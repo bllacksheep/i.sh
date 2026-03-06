@@ -47,8 +47,30 @@ void test_is_expression_should_verify_various_expression_type(void) {
   }
 }
 
-// void test_is_builtin_should_verify_various_builtin_type(void) { is_builtin();
-// }
+void test_get_builtins_should_returns_list_of_known_builtins(void) {
+  builtin_t expected[MAX] = {
+      {echo, "echo"},
+      {fexit, "exit"},
+      {fexit, "q"},
+  };
+  builtin_t *actual = get_builtins();
+
+  TEST_ASSERT_EQUAL_MEMORY(expected, actual, sizeof(*actual) * MAX);
+}
+
+void test_is_builtin_should_verify_various_builtin_type(void) {
+#define SHOULD_VERIFY_BUILTIN_TYPES 3
+  char *cases[SHOULD_VERIFY_BUILTIN_TYPES] = {
+      "echo",
+      "exit",
+      "q",
+  };
+
+  for (int i = 0; i < SHOULD_VERIFY_BUILTIN_TYPES; i++) {
+    char *exp = cases[i];
+    TEST_ASSERT_EQUAL_UINT(MATCH, is_builtin(exp));
+  }
+}
 
 // void test_is_command_should_verify_various_command_type(void) { is_command();
 // }
@@ -160,6 +182,8 @@ int main(void) {
   RUN_TEST(test_parser_set_token_val_should_set_val_even_if_already_set);
   RUN_TEST(test_parser_set_token_type_should_set_type_based_on_input);
   RUN_TEST(test_is_expression_should_verify_various_expression_type);
+  RUN_TEST(test_get_builtins_should_returns_list_of_known_builtins);
+  RUN_TEST(test_is_builtin_should_verify_various_builtin_type);
 
   return UNITY_END();
 }
