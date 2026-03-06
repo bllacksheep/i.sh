@@ -11,11 +11,11 @@ typedef struct ht_item {
 typedef ht_item_t ht_table_t[HT_MAX];
 static ht_table_t *ht_table = NULL;
 
-// returning first element of table due to opaque items
-static ht_item_t *ht_init(void);
+static ht_table_t *ht_init(void);
+static ht_table_t *ht_get_table(void);
 static int ht_set_key(ht_item_t *, char *);
 static int ht_set_val(ht_item_t *, char *);
-static char *lookup_val(const ht_item_t *, const char *, const size_t);
+static ht_item_t *lookup_item(const ht_table_t *, const char *, const size_t);
 static unsigned get_hash(const char *, const size_t, const unsigned);
 
 static unsigned get_hash(const char *k, const size_t kl, const unsigned at) {
@@ -23,49 +23,50 @@ static unsigned get_hash(const char *k, const size_t kl, const unsigned at) {
 }
 
 // take table, key and key length and return value
-static char *lookup_val(const ht_item_t *tbl, const char *item_key,
-                        const size_t item_key_len) {
+static ht_item_t *lookup_val(const ht_table_t *tbl, const char *item_key,
+                             const size_t item_key_len) {
   unsigned attempt = 0;
   unsigned try = get_hash(item_key, item_key_len, attempt);
 
-  const ht_item_t *item = &tbl[try];
+  ht_item_t *item = (ht_item_t *)&tbl[try];
 
   while (1) {
     if (attempt == HT_MAX)
       break;
     if (strcmp(item->key, item_key) == 0)
-      return item->value;
+      return item;
     attempt++;
     // retry step by 1
     try = get_hash(item_key, item_key_len, attempt);
-    item = &tbl[try];
+    item = (ht_item_t *)&tbl[try];
   }
   return NULL;
 }
 
 // initialize a table if not already initialized and return pointer to first
 // elem
-static ht_item_t *ht_init() {
+static ht_table_t *ht_init(void) {
   if (ht_table != NULL) {
-    return (ht_item_t *)ht_table;
+    return ht_table;
   }
   ht_table = calloc(1, sizeof(ht_table_t));
   if (ht_table == NULL) {
     fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTINIT);
     exit(ERRHTINIT);
   }
-  return (ht_item_t *)ht_table;
+  return ht_table;
 }
 
-ht_item_t *ht_get_table() {
+static ht_table_t *ht_get_table(void) {
   if (ht_table == NULL) {
-    return (ht_item_t *)ht_init();
+    return ht_init();
   }
-  return (ht_item_t *)ht_table;
+  return ht_table;
 }
 
+// caller must check is val NULL
 const char *ht_get_var(const char *item_k) {
-  ht_item_t *table = ht_get_table();
+  ht_table_t *table = ht_get_table();
   if (table == NULL) {
     fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTGET);
     exit(ERRHTGET);
@@ -73,11 +74,11 @@ const char *ht_get_var(const char *item_k) {
   const size_t max_len = 20;
   const size_t item_kl = strnlen(item_k, max_len);
 
-  char *val = lookup_val(table, item_k, item_kl);
-  if (val == NULL) {
-    return NULL;
+  ht_item_t *item = lookup_item(table, item_k, item_kl);
+  if (item != NULL) {
+    return item->value;
   }
-  return val;
+  return NULL;
 }
 
 static int ht_set_val(ht_item_t *item, char *v) {
@@ -113,24 +114,24 @@ static int ht_set_key(ht_item_t *item, char *k) {
 }
 
 int ht_put_var(const char *item_k, const char *item_v) {
-  ht_item_t *table = ht_get_table();
+  ht_table_t *table = ht_get_table();
   if (table == NULL) {
     fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTINS);
     exit(ERRHTINS);
   }
 
-  if (ht_set_key(ht_item, k) != EXIT_SUCCESS) {
+  if (ht_set_key(ht_item, item_k) != EXIT_SUCCESS) {
     return EXIT_FAILURE;
   }
-  if (ht_set_val(ht_item, v) != EXIT_SUCCESS) {
+  if (ht_set_val(ht_item, item_v) != EXIT_SUCCESS) {
     return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;
 }
 
-int ht_del_var(char *k) {
-  ht_item_t *table = ht_get_table();
+int ht_del_var(const char *item_k) {
+  ht_table_t *table = ht_get_table();
   if (table == NULL) {
     fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTDEL);
     exit(ERRHTDEL);
