@@ -26,6 +26,10 @@ typedef struct semantic_token {
   semantic_type_t type;
 } semantic_token_t;
 
+enum parser_matching {
+  MATCH = 0,
+};
+
 void simple_parser(const char *);
 ssize_t read_input(char *);
 void repl();
