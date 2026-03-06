@@ -28,7 +28,7 @@ static ht_table_t *ht_table = NULL;
 static ht_table_t *table_init(void);
 static ht_table_t *table_get(void);
 static ht_item_t *item_lookup(const ht_table_t *, const char *, const size_t);
-static unsigned hash(const char *, const size_t, const unsigned);
+static unsigned item_hash(const char *, const size_t, const unsigned);
 size_t key_get_len(const char *);
 
 static unsigned get_hash(const char *k, const size_t kl, const unsigned at) {
@@ -55,7 +55,7 @@ static ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
   }
 
   unsigned attempt = 0;
-  unsigned try = hash(item_key, item_key_len, attempt);
+  unsigned try = item_hash(item_key, item_key_len, attempt);
 
   ht_item_t *item = (ht_item_t *)&tbl[try];
 
