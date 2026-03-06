@@ -30,7 +30,13 @@ enum parser_matching {
   MATCH = 0,
 };
 
+typedef struct builtin {
+  int (*builtin)(size_t, void *[]);
+  char *name;
+} builtin_t;
+
 void simple_parser(const char *);
+builtin_t *get_builtins(void);
 ssize_t read_input(char *);
 void repl();
 void exec_command(int, size_t, char **);
@@ -45,6 +51,7 @@ void parser_set_token_type(semantic_token_t *);
 void parser_set_token_val(char *, semantic_token_t *);
 int is_expression(char *);
 int is_command(char *);
+int is_builtin(char *);
 void tokenv_to_argv(size_t, char **, semantic_token_t **);
 int echo(size_t, void **);
 int fexit(size_t, void **);
