@@ -22,6 +22,37 @@ int echo(size_t, void **);
 int fexit(size_t, void **);
 */
 
+void test_is_expression_should_verify_various_expression_type(void) {
+#define SHOULD_VERIFY_EXPR_TYPES 3
+  char *expression_cases[SHOULD_VERIFY_EXPR_TYPES] = {
+      "$x",
+      "x=1",
+      "x=$y",
+  };
+
+  for (int i = 0; i < SHOULD_VERIFY_EXPR_TYPES; i++) {
+    char *exp = expression_cases[i];
+    TEST_ASSERT_EQUAL_UINT(MATCH, is_expression(exp));
+  }
+
+  char *non_expression_cases[SHOULD_VERIFY_EXPR_TYPES] = {
+      "x",
+      "ls",
+      "<mycommand>",
+  };
+
+  for (int i = 0; i < SHOULD_VERIFY_EXPR_TYPES; i++) {
+    char *exp = non_expression_cases[i];
+    TEST_ASSERT_EQUAL_UINT(!MATCH, is_expression(exp));
+  }
+}
+
+// void test_is_builtin_should_verify_various_builtin_type(void) { is_builtin();
+// }
+
+// void test_is_command_should_verify_various_command_type(void) { is_command();
+// }
+
 // token buf should always be unset, before being set
 void test_parser_set_token_val_should_set_val_even_if_already_set(void) {
 
@@ -128,6 +159,7 @@ int main(void) {
   RUN_TEST(test_has_iterator_should_ignore_buffer);
   RUN_TEST(test_parser_set_token_val_should_set_val_even_if_already_set);
   RUN_TEST(test_parser_set_token_type_should_set_type_based_on_input);
+  RUN_TEST(test_is_expression_should_verify_various_expression_type);
 
   return UNITY_END();
 }
