@@ -25,18 +25,18 @@ typedef struct ht_item {
 typedef ht_item_t ht_table_t[HT_MAX];
 static ht_table_t *ht_table = NULL;
 
-static ht_table_t *init(void);
-static ht_table_t *get_table(void);
-static ht_item_t *lookup_item(const ht_table_t *, const char *, const size_t);
-static unsigned get_hash(const char *, const size_t, const unsigned);
-size_t get_key_len(const char *);
+static ht_table_t *table_init(void);
+static ht_table_t *table_get(void);
+static ht_item_t *item_lookup(const ht_table_t *, const char *, const size_t);
+static unsigned hash(const char *, const size_t, const unsigned);
+size_t key_get_len(const char *);
 
 static unsigned get_hash(const char *k, const size_t kl, const unsigned at) {
   return 0;
 }
 
 // take table, key and key length and return value
-static ht_item_t *lookup_item(const ht_table_t *tbl, const char *item_key,
+static ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
                               const size_t item_key_len) {
 
   if (tbl == NULL) {
@@ -55,7 +55,7 @@ static ht_item_t *lookup_item(const ht_table_t *tbl, const char *item_key,
   }
 
   unsigned attempt = 0;
-  unsigned try = get_hash(item_key, item_key_len, attempt);
+  unsigned try = hash(item_key, item_key_len, attempt);
 
   ht_item_t *item = (ht_item_t *)&tbl[try];
 
@@ -93,9 +93,8 @@ static ht_table_t *table_init(void) {
 
 // return a table init if not exists
 static ht_table_t *table_get(void) {
-  if (ht_table == NULL) {
+  if (ht_table == NULL)
     return table_init();
-  }
   return ht_table;
 }
 
@@ -112,8 +111,8 @@ const char *ht_get_var(const char *item_k) {
     exit(ERRHTGET);
   }
 
-  size_t item_kl = get_key_len(item_k);
-  ht_item_t *item = lookup_item(table, item_k, item_kl);
+  size_t item_kl = key_get_len(item_k);
+  ht_item_t *item = item_lookup(table, item_k, item_kl);
   if (item != NULL) {
     return item->value;
   }
@@ -148,8 +147,8 @@ int ht_put_var(const char *item_k, const char *item_v) {
     exit(ERRHTGET);
   }
 
-  size_t item_kl = get_key_len(item_k);
-  ht_item_t *item = lookup_item(table, item_k, item_kl);
+  size_t item_kl = key_get_len(item_k);
+  ht_item_t *item = item_lookup(table, item_k, item_kl);
 
   if (item != NULL) {
     item->key = strdup(item_k);
