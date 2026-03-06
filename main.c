@@ -15,16 +15,13 @@ enum ERRORS {
   ERRBUFFERINUSE,
 };
 
-typedef struct builtin {
-  int (*builtin)(size_t, void *[]);
-  char *name;
-} builtin_t;
-
 builtin_t builtins[MAX] = {
     {echo, "echo"},
     {fexit, "exit"},
     {fexit, "q"},
 };
+
+builtin_t *get_builtins(void) { return builtins; }
 
 // free and exit
 int fexit(size_t argc, void **argv) {
@@ -193,9 +190,9 @@ int is_builtin(char *buf) {
     fprintf(stderr, "i.sh: no buffer in builtin, code %d\n", ERRNOBUFFER);
     exit(ERRNOBUFFER);
   }
-
-  for (int i = 0; i < MAX && builtins[i].name != NULL; i++) {
-    if (strcmp(buf, builtins[i].name) == MATCH)
+  builtin_t *b = get_builtins();
+  for (int i = 0; i < MAX && b[i].name != NULL; i++) {
+    if (strcmp(buf, b[i].name) == MATCH)
       return MATCH;
   }
   return !MATCH;
