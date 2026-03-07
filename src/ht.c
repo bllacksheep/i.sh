@@ -119,7 +119,7 @@ const char *ht_get_var(const char *item_k) {
   return NULL;
 }
 
-static size_t get_key_len(const char *k) {
+static size_t key_get_len(const char *k) {
   if (k == NULL) {
     fprintf(stderr, "i.sh: ht no buffer, code: %d", ERRHTNOBUF);
     exit(ERRHTNOBUF);
