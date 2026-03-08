@@ -24,7 +24,7 @@ $(PATHBN)/$(EXE): src/main.c src/ish.h
 
 $(PATHBN)/test_%: tests/test_%.c $(PATHUN)/unity.c
 	@mkdir -p $(PATHBN)
-	$(CC) $(CFLAGS) -DTEST src/$(subst test_,,$(notdir $@)).c $^ -o $@
+	$(CC) $(CFLAGS) -DTEST $(PATHSC)/$(subst test_,,$(notdir $@)).c $^ -o $@
 
 setup:
 	mkdir -p $(PATHS)
