@@ -18,13 +18,13 @@ all: $(PATHBN)/$(EXE)
 check: $(RUNNERS)
 	@for runner in $(RUNNERS); do ./$$runner; done
 
-$(PATHBN)/$(EXE): src/main.c src/ish.h
-	@mkdir -p $(PATHBN)
-	$(CC) $(CFLAGS) $< -o $@
-
 $(PATHBN)/test_%: tests/test_%.c $(PATHUN)/unity.c
 	@mkdir -p $(PATHBN)
 	$(CC) $(CFLAGS) -DTEST $(PATHSC)/$(subst test_,,$(notdir $@)).c $^ -o $@
+
+$(PATHBN)/$(EXE): src/main.c src/ish.h
+	@mkdir -p $(PATHBN)
+	$(CC) $(CFLAGS) $< -o $@
 
 setup:
 	mkdir -p $(PATHS)
