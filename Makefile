@@ -5,10 +5,13 @@ PATHSC := src
 CFLAGS := -I$(PATHUN) -I$(PATHSC) -ggdb3 -O0
 CC := gcc
 EXE := i.sh
-PATHS := $(PATHBD) $(PATHBN) $(PATHRT)
+PATHS := $(PATHBD) $(PATHBN)
 
 TESTS := $(wildcard tests/test_*.c)
 RUNNERS := $(patsubst tests/%.c,$(PATHBN)/%,$(TESTS))
+
+SRCS := $(wildcard $(PATHSC)/*.c)
+OBJ := $(patsubst $(PATHSC)/%.c,$(PATHBD)/%.o,$(SRCS))
 
 .PHONY: setup all clean check
 
@@ -22,9 +25,12 @@ $(PATHBN)/test_%: tests/test_%.c $(PATHUN)/unity.c
 	@mkdir -p $(PATHBN)
 	$(CC) $(CFLAGS) -DTEST $(PATHSC)/$(subst test_,,$(notdir $@)).c $^ -o $@
 
-$(PATHBN)/$(EXE): src/main.c
+$(PATHBN)/$(EXE): $(OBJ)
 	@mkdir -p $(PATHBN)
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $^ -o $@
+
+build/%.o: $(PATHSC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 setup:
 	mkdir -p $(PATHS)
