@@ -17,6 +17,10 @@ STATIC unsigned item_hash(const char *, const size_t, const unsigned);
 STATIC size_t key_get_len(const char *);
 */
 
+void test_ht_ensure_ht_table_initializes_as_null() {
+  TEST_ASSERT_NULL(ht_table);
+}
+
 void test_ht_table_init_should_init_a_table_if_not_exist() {
   ht_table_t *expected = calloc(1, sizeof(ht_table_t));
   TEST_ASSERT_NOT_NULL_MESSAGE(expected, "failed to allocate a test table");
@@ -48,6 +52,7 @@ void test_ht_key_get_len_should_return_the_len_of_an_item_key(void) {}
 int main(void) {
   UNITY_BEGIN();
 
+  RUN_TEST(test_ht_ensure_ht_table_initializes_as_null);
   RUN_TEST(test_ht_table_init_should_init_a_table_if_not_exist);
   RUN_TEST(test_ht_table_get_should_return_an_ht_table);
   RUN_TEST(test_ht_item_lookup_should_return_an_ht_item);
