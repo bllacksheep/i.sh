@@ -1,7 +1,7 @@
 #include <unistd.h>
 
 #define HT_MAX 1000
-#define HT_MAX_KEY_LEN 20
+#define HT_MAX_KEY_LEN 25
 
 #ifdef TEST
 #define STATIC

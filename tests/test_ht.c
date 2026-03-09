@@ -1,6 +1,7 @@
 #include "ht_internal.h"
 #include "unity.h"
 #include <stdlib.h>
+#include <string.h>
 
 void setUp(void) {}
 
@@ -13,7 +14,6 @@ void tearDown(void) {
 /*
 STATIC ht_item_t *item_lookup(const ht_table_t *, const char *, const size_t);
 STATIC unsigned item_hash(const char *, const size_t, const unsigned);
-STATIC size_t key_get_len(const char *);
 */
 
 void test_ht_ensure_ht_table_initializes_as_null() {
@@ -46,9 +46,25 @@ void test_ht_table_get_should_return_an_ht_table(void) {
   // actual is freed in teardown
 }
 
+void test_ht_key_get_len_should_return_the_len_of_an_item_key(void) {
+  struct test_case {
+    char *key;
+    size_t len;
+  };
+#define SHOULD_VERIFY_KEY_LEN 4
+
+  struct test_case cases[SHOULD_VERIFY_KEY_LEN] = {
+      {"1", strlen("1")},
+      {"yolo", strlen("yolo")},
+      {"diochuimhneachadh", strlen("diochuimhneachadh")},
+      {"somereallylongstringeh", strlen("somereallylongstringeh")},
+  };
+  for (int i = 0; i < SHOULD_VERIFY_KEY_LEN; i++)
+    TEST_ASSERT_EQUAL_size_t(cases[i].len, key_get_len(cases[i].key));
+}
+
 void test_ht_item_lookup_should_return_an_ht_item(void) {}
 void test_ht_item_hash_should_hash_an_item_key(void) {}
-void test_ht_key_get_len_should_return_the_len_of_an_item_key(void) {}
 
 int main(void) {
   UNITY_BEGIN();
