@@ -1,5 +1,6 @@
 #include "ht_internal.h"
 #include "unity.h"
+#include <stdlib.h>
 
 void setUp(void) {}
 void tearDown(void) {}
@@ -12,7 +13,16 @@ STATIC size_t key_get_len(const char *);
 */
 
 void test_ht_table_get_should_return_an_ht_table(void) {
-  ht_table_t *ht = table_get();
+  ht_table_t *expected = calloc(1, sizeof(ht_table_t));
+  TEST_ASSERT_NOT_NULL_MESSAGE(expected, "failed to allocate a test table");
+
+  ht_table_t *actual = table_get();
+  TEST_ASSERT_NOT_NULL_MESSAGE(actual, "failed to get new table");
+
+  TEST_ASSERT_EQUAL_MEMORY(expected, actual, sizeof(ht_table_t));
+
+  free(expected);
+  free(actual);
 }
 void test_ht_item_lookup_should_return_an_ht_item(void) {}
 void test_ht_item_hash_should_hash_an_item_key(void) {}
