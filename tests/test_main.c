@@ -50,8 +50,8 @@ void test_is_expression_should_verify_various_expression_type(void) {
 void test_get_builtins_should_returns_list_of_known_builtins(void) {
   builtin_t expected[MAX] = {
       {echo, "echo"},
-      {fexit, "exit"},
-      {fexit, "q"},
+      {free_exit, "exit"},
+      {free_exit, "q"},
   };
   builtin_t *actual = get_builtins();
 
