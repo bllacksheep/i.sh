@@ -17,6 +17,7 @@ all: $(PATHBN)/$(EXE)
 check: $(RUNNERS)
 	@for runner in $(RUNNERS); do ./$$runner; done
 
+# test_x -> x.c + test_x.c unity.c
 $(PATHBN)/test_%: tests/test_%.c $(PATHUN)/unity.c
 	@mkdir -p $(PATHBN)
 	$(CC) $(CFLAGS) -DTEST $(PATHSC)/$(subst test_,,$(notdir $@)).c $^ -o $@
