@@ -3,3 +3,4 @@ i.sh
 ish
 build/
 bin/
+compile_commands.json
