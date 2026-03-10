@@ -137,16 +137,19 @@ void test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates() {
 void test_ht_item_lookup_should_return_an_ht_item() {
   ht_table_t *ht = table_get();
 
-  const ht_item_t *ht_item = item_lookup(ht, "key", strlen("key"));
-
   // not found
-  TEST_ASSERT_NULL(ht_item);
-  /*
-    ht[hash] =
-    ht_item_t *ht_item = item_lookup(ht, "key", strnlen("key", HT_MAX_KEY_LEN));
-    // found
-    TEST_ASSERT_NOT_NULL(ht_item);
-    */
+  const ht_item_t *ht_item_not_found = item_lookup(ht, "key", strlen("key"));
+  TEST_ASSERT_NULL(ht_item_not_found);
+
+  // found
+  const unsigned try = 19;
+  ht_item_t *item = (ht_item_t *)&(*ht)[try];
+  item->key = "key";
+  item->value = "1";
+  const ht_item_t *ht_item_found = item_lookup(ht, "key", strlen("key"));
+  TEST_ASSERT_NOT_NULL(ht_item_found);
+  TEST_ASSERT_EQUAL_STRING(item->key, ht_item_found->key);
+  TEST_ASSERT_EQUAL_STRING(item->value, ht_item_found->value);
 }
 
 void test_ht_put_var_should_create_an_item_in_ht_table() {
