@@ -138,6 +138,7 @@ void test_ht_item_lookup_should_return_an_ht_item() {
   ht_table_t *ht = table_get();
 
   const ht_item_t *ht_item = item_lookup(ht, "key", strlen("key"));
+
   // not found
   TEST_ASSERT_NULL(ht_item);
   /*

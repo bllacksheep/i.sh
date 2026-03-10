@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+static char HT_TOMBSTONE_SENTINEL = 0;
+#define HT_TOMBSTONE &(HT_TOMBSTONE_SENTINEL)
+
 STATIC ht_table_t *ht_table = NULL;
 
 // E n-1 s[i]**n-1-i
@@ -62,7 +65,11 @@ STATIC const ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
   while (1) {
     if (attempt == HT_MAX - 1)
       break;
-    if (item->key != NULL) {
+    // if NULL won't be beyond this point
+    if (item->key == NULL)
+      return NULL;
+    // if tombstone keep looking
+    if (item->key != HT_TOMBSTONE) {
       if (strncmp(item->key, item_key, HT_MAX_KEY_LEN) == 0)
         return item;
     }
