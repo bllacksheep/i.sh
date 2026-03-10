@@ -23,8 +23,8 @@ enum ht_errors {
 };
 
 typedef struct ht_item {
-  char *key;
-  char *value;
+  const char *key;
+  const char *value;
 } ht_item_t;
 
 typedef ht_item_t ht_table_t[HT_MAX];

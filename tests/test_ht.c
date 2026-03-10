@@ -134,19 +134,24 @@ void test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates() {
   TEST_ASSERT_EQUAL_UINT(cases[5].expected, actual);
 }
 
-void test_ht_item_lookup_should_return_an_ht_item() {
+void test_ht_item_lookup_should_return_null() {
   ht_table_t *ht = table_get();
+  const char key[] = "key";
 
   // not found
-  const ht_item_t *ht_item_not_found = item_lookup(ht, "key", strlen("key"));
+  const ht_item_t *ht_item_not_found = item_lookup(ht, key, strlen(key));
   TEST_ASSERT_NULL(ht_item_not_found);
+}
 
+void test_ht_item_lookup_should_return_ht_item() {
+  ht_table_t *ht = table_get();
+  const char key[] = "key";
   // found
   const unsigned try = 19;
   ht_item_t *item = (ht_item_t *)&(*ht)[try];
-  item->key = "key";
+  item->key = key;
   item->value = "1";
-  const ht_item_t *ht_item_found = item_lookup(ht, "key", strlen("key"));
+  const ht_item_t *ht_item_found = item_lookup(ht, key, strlen(key));
   TEST_ASSERT_NOT_NULL(ht_item_found);
   TEST_ASSERT_EQUAL_STRING(item->key, ht_item_found->key);
   TEST_ASSERT_EQUAL_STRING(item->value, ht_item_found->value);
@@ -170,7 +175,8 @@ int main(void) {
   RUN_TEST(test_ht_ensure_ht_table_initializes_as_null);
   RUN_TEST(test_ht_table_init_should_init_a_table_if_not_exist);
   RUN_TEST(test_ht_table_get_should_return_an_ht_table);
-  RUN_TEST(test_ht_item_lookup_should_return_an_ht_item);
+  RUN_TEST(test_ht_item_lookup_should_return_null);
+  RUN_TEST(test_ht_item_lookup_should_return_ht_item);
   RUN_TEST(test_ht_hash_should_hash_an_item_key);
   RUN_TEST(test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates);
   RUN_TEST(test_ht_key_get_len_should_return_the_len_of_an_item_key);
