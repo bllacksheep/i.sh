@@ -111,6 +111,8 @@ void test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates() {
 
   unsigned actual = 0;
 
+  // simulate that an index is already occupied
+
   // first attempt with "key"
   actual = item_hash(cases[0].key, strnlen(cases[0].key, 20), 0);
   TEST_ASSERT_EQUAL_UINT(cases[0].expected, actual);
