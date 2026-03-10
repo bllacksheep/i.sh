@@ -63,8 +63,16 @@ void test_ht_key_get_len_should_return_the_len_of_an_item_key(void) {
     TEST_ASSERT_EQUAL_size_t(cases[i].len, key_get_len(cases[i].key));
 }
 
+void test_ht_item_hash_should_hash_an_item_key(void) {
+  unsigned expected = 0;
+  char key[] = "key";
+  unsigned actual = item_hash(key, strnlen(key, 3), 0);
+
+  TEST_ASSERT_EQUAL_UINT(expected, actual);
+}
+
+void test_ht_put_var_should_create_an_item_in_ht_table() {}
 void test_ht_item_lookup_should_return_an_ht_item(void) {}
-void test_ht_item_hash_should_hash_an_item_key(void) {}
 
 int main(void) {
   UNITY_BEGIN();
@@ -74,6 +82,7 @@ int main(void) {
   RUN_TEST(test_ht_table_get_should_return_an_ht_table);
   RUN_TEST(test_ht_item_lookup_should_return_an_ht_item);
   RUN_TEST(test_ht_item_hash_should_hash_an_item_key);
+  RUN_TEST(test_ht_put_var_should_create_an_item_in_ht_table);
   RUN_TEST(test_ht_key_get_len_should_return_the_len_of_an_item_key);
 
   return UNITY_END();
