@@ -28,9 +28,10 @@ STATIC unsigned item_hash(const char *item_key, const size_t item_key_len,
   return (hash_a + (attempt * (hash_b + 1))) % HT_MAX;
 }
 
+// NULL not found
 // take table, key and key length and return value
-STATIC ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
-                              const size_t item_key_len) {
+STATIC const ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
+                                    const size_t item_key_len) {
 
   if (tbl == NULL) {
     fprintf(stderr, "i.sh: ht no table, code: %d", ERRHTNOTABLE);
@@ -50,7 +51,8 @@ STATIC ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
   unsigned attempt = 0;
   unsigned try = item_hash(item_key, item_key_len, attempt);
 
-  ht_item_t *item = (ht_item_t *)&tbl[try];
+  ht_item_t *base = (ht_item_t *)tbl;
+  const ht_item_t *item = &base[try];
 
   if (item == NULL) {
     fprintf(stderr, "i.sh: ht no item at index, code: %d", ERRHTNOITEM);
@@ -58,14 +60,16 @@ STATIC ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
   }
 
   while (1) {
-    if (attempt == HT_MAX)
+    if (attempt == HT_MAX - 1)
       break;
-    if (strcmp(item->key, item_key) == 0)
-      return item;
+    if (item->key != NULL) {
+      if (strncmp(item->key, item_key, HT_MAX_KEY_LEN) == 0)
+        return item;
+    }
     attempt++;
     // retry step by 1
     try = item_hash(item_key, item_key_len, attempt);
-    item = (ht_item_t *)&tbl[try];
+    item = &base[try];
   }
   return NULL;
 }
@@ -105,7 +109,7 @@ const char *ht_get_var(const char *item_k) {
   }
 
   size_t item_kl = key_get_len(item_k);
-  ht_item_t *item = item_lookup(table, item_k, item_kl);
+  const ht_item_t *item = item_lookup(table, item_k, item_kl);
   if (item != NULL) {
     return item->value;
   }
@@ -150,7 +154,8 @@ int ht_put_var(const char *item_k, const char *item_v) {
   }
 
   size_t item_kl = key_get_len(item_k);
-  ht_item_t *item = item_lookup(table, item_k, item_kl);
+  // drop const to make mutable here only
+  ht_item_t *item = (ht_item_t *)item_lookup(table, item_k, item_kl);
 
   if (item != NULL) {
     item->key = strdup(item_k);

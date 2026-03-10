@@ -1,3 +1,4 @@
+#include "ht.h"
 #include "ht_internal.h"
 #include "unity.h"
 #include <stdlib.h>
@@ -10,11 +11,6 @@ void tearDown(void) {
     free(ht_table);
   ht_table = NULL;
 }
-
-/*
-STATIC ht_item_t *item_lookup(const ht_table_t *, const char *, const size_t);
-STATIC unsigned item_hash(const char *, const size_t, const unsigned);
-*/
 
 void test_ht_ensure_ht_table_initializes_as_null() {
   TEST_ASSERT_NULL(ht_table);
@@ -138,8 +134,31 @@ void test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates() {
   TEST_ASSERT_EQUAL_UINT(cases[5].expected, actual);
 }
 
-void test_ht_put_var_should_create_an_item_in_ht_table() {}
-void test_ht_item_lookup_should_return_an_ht_item(void) {}
+void test_ht_item_lookup_should_return_an_ht_item() {
+  ht_table_t *ht = table_get();
+
+  const ht_item_t *ht_item = item_lookup(ht, "key", strlen("key"));
+  // not found
+  TEST_ASSERT_NULL(ht_item);
+  /*
+    ht[hash] =
+    ht_item_t *ht_item = item_lookup(ht, "key", strnlen("key", HT_MAX_KEY_LEN));
+    // found
+    TEST_ASSERT_NOT_NULL(ht_item);
+    */
+}
+
+void test_ht_put_var_should_create_an_item_in_ht_table() {
+  // int ht_put_var(const char *, const char *);
+}
+
+void test_ht_get_var_should_create_an_item_in_ht_table() {
+  // const char *ht_get_var(const char *);
+}
+
+void test_ht_del_var_should_create_an_item_in_ht_table() {
+  // int ht_del_var(const char *);
+}
 
 int main(void) {
   UNITY_BEGIN();
@@ -150,8 +169,10 @@ int main(void) {
   RUN_TEST(test_ht_item_lookup_should_return_an_ht_item);
   RUN_TEST(test_ht_hash_should_hash_an_item_key);
   RUN_TEST(test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates);
-  RUN_TEST(test_ht_put_var_should_create_an_item_in_ht_table);
   RUN_TEST(test_ht_key_get_len_should_return_the_len_of_an_item_key);
+  RUN_TEST(test_ht_get_var_should_create_an_item_in_ht_table);
+  RUN_TEST(test_ht_put_var_should_create_an_item_in_ht_table);
+  RUN_TEST(test_ht_del_var_should_create_an_item_in_ht_table);
 
   return UNITY_END();
 }
