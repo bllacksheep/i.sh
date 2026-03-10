@@ -139,34 +139,60 @@ void test_ht_item_lookup_should_return_null() {
   const char key[] = "key";
 
   // not found
-  const ht_item_t *ht_item_not_found = item_lookup(ht, key, strlen(key));
+  const ht_item_t *ht_item_not_found = item_lookup_slot(ht, key, strlen(key));
   TEST_ASSERT_NULL(ht_item_not_found);
 }
 
 void test_ht_item_lookup_should_return_ht_item() {
   ht_table_t *ht = table_get();
   const char key[] = "key";
+
   // found
   const unsigned try = 19;
   ht_item_t *item = (ht_item_t *)&(*ht)[try];
   item->key = key;
   item->value = "1";
-  const ht_item_t *ht_item_found = item_lookup(ht, key, strlen(key));
+  const ht_item_t *ht_item_found = item_lookup_slot(ht, key, strlen(key));
   TEST_ASSERT_NOT_NULL(ht_item_found);
   TEST_ASSERT_EQUAL_STRING(item->key, ht_item_found->key);
   TEST_ASSERT_EQUAL_STRING(item->value, ht_item_found->value);
 }
 
-void test_ht_put_var_should_create_an_item_in_ht_table() {
-  // int ht_put_var(const char *, const char *);
+void test_ht_put_var_should_insert_ht_item() {
+  int ret = 0;
+
+  ret = ht_put_var("key", "1");
+  TEST_ASSERT_EQUAL_INT(ret, EXIT_SUCCESS);
 }
 
-void test_ht_get_var_should_create_an_item_in_ht_table() {
-  // const char *ht_get_var(const char *);
+void test_ht_get_var_should_retrieve_ht_item() {
+  const char exists[] = "exists";
+  ht_put_var(exists, "1");
+  const char *val = ht_get_var(exists);
+
+  TEST_ASSERT_EQUAL_STRING(val, "1");
 }
 
-void test_ht_del_var_should_create_an_item_in_ht_table() {
-  // int ht_del_var(const char *);
+void test_ht_get_var_should_retrieve_null() {
+  const char exists[] = "exists";
+  const char *val = ht_get_var(exists);
+
+  TEST_ASSERT_NULL(val);
+}
+
+void test_ht_del_var_should_delete_ht_item() {
+  const char exists[] = "exists";
+  ht_put_var(exists, "1");
+  int ret = ht_del_var(exists);
+
+  TEST_ASSERT_EQUAL_INT(ret, EXIT_SUCCESS);
+}
+
+void test_ht_del_var_should_fail_to_delete_ht_item() {
+  const char not_exists[] = "null";
+
+  int ret = ht_del_var(not_exists);
+  TEST_ASSERT_EQUAL_INT(ret, EXIT_FAILURE);
 }
 
 int main(void) {
@@ -180,9 +206,11 @@ int main(void) {
   RUN_TEST(test_ht_hash_should_hash_an_item_key);
   RUN_TEST(test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates);
   RUN_TEST(test_ht_key_get_len_should_return_the_len_of_an_item_key);
-  RUN_TEST(test_ht_get_var_should_create_an_item_in_ht_table);
-  RUN_TEST(test_ht_put_var_should_create_an_item_in_ht_table);
-  RUN_TEST(test_ht_del_var_should_create_an_item_in_ht_table);
+  RUN_TEST(test_ht_get_var_should_retrieve_null);
+  RUN_TEST(test_ht_get_var_should_retrieve_ht_item);
+  RUN_TEST(test_ht_put_var_should_insert_ht_item);
+  RUN_TEST(test_ht_del_var_should_fail_to_delete_ht_item);
+  RUN_TEST(test_ht_del_var_should_delete_ht_item);
 
   return UNITY_END();
 }

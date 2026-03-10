@@ -31,10 +31,9 @@ STATIC unsigned item_hash(const char *item_key, const size_t item_key_len,
   return (hash_a + (attempt * (hash_b + 1))) % HT_MAX;
 }
 
-// NULL not found
-// take table, key and key length and return value
-STATIC const ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
-                                    const size_t item_key_len) {
+STATIC const ht_item_t *item_lookup_slot(const ht_table_t *tbl,
+                                         const char *item_key,
+                                         const size_t item_key_len) {
 
   if (tbl == NULL) {
     fprintf(stderr, "i.sh: ht no table, code: %d", ERRHTNOTABLE);
@@ -67,12 +66,12 @@ STATIC const ht_item_t *item_lookup(const ht_table_t *tbl, const char *item_key,
       break;
     // if NULL won't be beyond this point
     if (item->key == NULL)
-      return NULL;
+      return item;
+    if (item->key == HT_TOMBSTONE)
+      return item;
     // if tombstone keep looking
-    if (item->key != HT_TOMBSTONE) {
-      if (strncmp(item->key, item_key, HT_MAX_KEY_LEN) == 0)
-        return item;
-    }
+    if (strncmp(item->key, item_key, HT_MAX_KEY_LEN) == 0)
+      return item;
     attempt++;
     // retry step by 1
     try = item_hash(item_key, item_key_len, attempt);
@@ -116,7 +115,7 @@ const char *ht_get_var(const char *item_k) {
   }
 
   size_t item_kl = key_get_len(item_k);
-  const ht_item_t *item = item_lookup(table, item_k, item_kl);
+  const ht_item_t *item = item_lookup_slot(table, item_k, item_kl);
   if (item != NULL) {
     return item->value;
   }
@@ -162,22 +161,23 @@ int ht_put_var(const char *item_k, const char *item_v) {
 
   size_t item_kl = key_get_len(item_k);
   // drop const to make mutable here only
-  ht_item_t *item = (ht_item_t *)item_lookup(table, item_k, item_kl);
+  ht_item_t *item = (ht_item_t *)item_lookup_slot(table, item_k, item_kl);
 
-  if (item != NULL) {
-    item->key = strdup(item_k);
-    if (item->key == NULL) {
-      fprintf(stderr, "i.sh: failed to initialize key %s, code: %d", item_k,
-              ERRHTINS);
-      return EXIT_FAILURE;
-    }
+  if (item == NULL)
+    return EXIT_FAILURE;
 
-    item->value = strdup(item_v);
-    if (item->value == NULL) {
-      fprintf(stderr, "i.sh: failed to initialize value %s, code: %d", item_v,
-              ERRHTINS);
-      return EXIT_FAILURE;
-    }
+  item->key = strdup(item_k);
+  if (item->key == NULL) {
+    fprintf(stderr, "i.sh: failed to initialize key %s, code: %d", item_k,
+            ERRHTINS);
+    return EXIT_FAILURE;
+  }
+
+  item->value = strdup(item_v);
+  if (item->value == NULL) {
+    fprintf(stderr, "i.sh: failed to initialize value %s, code: %d", item_v,
+            ERRHTINS);
+    return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
 }
