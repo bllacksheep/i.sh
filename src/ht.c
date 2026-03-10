@@ -184,11 +184,27 @@ int ht_put_var(const char *item_k, const char *item_v) {
 
 // unset in shell, remove an item by freeing it's k,v and setting to NULL
 int ht_del_var(const char *item_k) {
+  if (item_k == NULL) {
+    fprintf(stderr, "i.sh: no item key to delete, code: %d", ERRHTDEL);
+    exit(ERRHTDEL);
+  }
+
   ht_table_t *table = table_get();
+
   if (table == NULL) {
     fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTDEL);
     exit(ERRHTDEL);
   }
 
-  return 0;
+  size_t item_kl = key_get_len(item_k);
+  // drop const to make mutable here only
+  ht_item_t *item = (ht_item_t *)item_lookup_slot(table, item_k, item_kl);
+
+  if (item == NULL || item->key == NULL)
+    return EXIT_FAILURE;
+
+  item->key = HT_TOMBSTONE;
+  item->value = HT_TOMBSTONE;
+
+  return EXIT_SUCCESS;
 }
