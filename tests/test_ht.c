@@ -97,7 +97,45 @@ void test_ht_hash_should_hash_an_item_key(void) {
   }
 }
 
-void test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates() {}
+void test_ht_item_hash_should_hash_an_item_key_and_probe_on_duplicates() {
+  struct test_case {
+    char *key;
+    unsigned expected;
+  };
+
+#define SHOULD_VERIFY_DOUBLE_HASH_VALUES 6
+  struct test_case cases[SHOULD_VERIFY_DOUBLE_HASH_VALUES] = {
+      {"key", 19u},  {"key", 53u},          {"yolo", 17u},
+      {"yolo", 25u}, {"onomatopoeia", 20u}, {"onomatopeoia", 42u},
+  };
+
+  unsigned actual = 0;
+
+  // first attempt with "key"
+  actual = item_hash(cases[0].key, strnlen(cases[0].key, 20), 0);
+  TEST_ASSERT_EQUAL_UINT(cases[0].expected, actual);
+
+  // second attempt with "key"
+  actual = item_hash(cases[1].key, strnlen(cases[1].key, 20), 1);
+  TEST_ASSERT_EQUAL_UINT(cases[1].expected, actual);
+
+  // first attempt with "yolo"
+  actual = item_hash(cases[2].key, strnlen(cases[2].key, 20), 0);
+  TEST_ASSERT_EQUAL_UINT(cases[2].expected, actual);
+
+  // second attempt with "yolo"
+  actual = item_hash(cases[3].key, strnlen(cases[3].key, 20), 1);
+  TEST_ASSERT_EQUAL_UINT(cases[3].expected, actual);
+
+  // first attempt with "onomatopoeia"
+  actual = item_hash(cases[4].key, strnlen(cases[4].key, 20), 0);
+  TEST_ASSERT_EQUAL_UINT(cases[4].expected, actual);
+
+  // second attempt with "onomatopoeia"
+  actual = item_hash(cases[5].key, strnlen(cases[5].key, 20), 1);
+  TEST_ASSERT_EQUAL_UINT(cases[5].expected, actual);
+}
+
 void test_ht_put_var_should_create_an_item_in_ht_table() {}
 void test_ht_item_lookup_should_return_an_ht_item(void) {}
 
