@@ -1,6 +1,6 @@
 #include <unistd.h>
 
-#define HT_MAX 1000
+#define HT_MAX 1009
 #define HT_MAX_KEY_LEN 25
 #define HT_PRIME_1 31u
 #define HT_PRIME_2 37u
