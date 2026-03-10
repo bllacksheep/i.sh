@@ -331,8 +331,11 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
         break;
       }
       if (*curr_token_pos == '$') {
+        // move past $
         curr_token_pos++;
         key[i] = *curr_token_pos;
+        // move past captured token above ^
+        curr_token_pos++;
         state = GETVALUE;
         break;
       }
@@ -376,7 +379,7 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
       state = ERROR;
       break;
     case CREATEVALUE:
-      if (isalpha(*curr_token_pos)) {
+      if (isalpha(*curr_token_pos) || isdigit(*curr_token_pos)) {
         val[i] = *curr_token_pos;
         curr_token_pos++;
         break;
@@ -384,8 +387,11 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
       if (*curr_token_pos == '\0') {
         // retain shell session variable state here
         // add value to hash table
-        ht_put_var(key, val);
-        state = NEXT;
+        if (ht_put_var(key, val) == EXIT_SUCCESS) {
+          state = NEXT;
+          break;
+        }
+        state = ERROR;
         break;
       }
       // if $x then x should already be in ht
@@ -517,7 +523,7 @@ void exec_command(int type, size_t argc, char **argv) {
     default:
       // vp path aware
       if (execvp(argv[0], argv) == -1) {
-        fprintf(stderr, "i.sh: command not found, code: %d\n", EXIT_FAILURE);
+        fprintf(stderr, "%s: command not found\n", *argv);
         _exit(EXIT_FAILURE);
       };
       exit(EXIT_SUCCESS);
