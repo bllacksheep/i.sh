@@ -283,7 +283,7 @@ char *getval(char *k) {
 }
 
 // parse x=1;y=2 expressions adding variable creation and reference x=$y
-void parse_expr(size_t argc, semantic_token_t **tokenv) {
+void parse_expr(size_t argc, semantic_token_t **tokenv, char **expr_value) {
   if (tokenv == NULL || *tokenv == NULL) {
     err_exit("no expression buffer", ERRNOBUFFER);
   }
@@ -349,9 +349,11 @@ void parse_expr(size_t argc, semantic_token_t **tokenv) {
       }
       if (*curr_token_pos == '\0') {
         // currently set to input buffer now being resolved to value
+        /*
         if ((*token_vec)->buf != NULL)
           free((*token_vec)->buf);
-        (*token_vec)->buf = (char *)ht_get_var(key);
+        */
+        *expr_value = (char *)ht_get_var(key);
         state = DONE;
         break;
       }
@@ -429,7 +431,8 @@ int echo(size_t argc, void **argv) {
   return 0;
 }
 
-void tokenv_to_argv(size_t argc, char **argv, semantic_token_t **tokenv) {
+void tokenv_to_argv(size_t argc, char **argv, semantic_token_t **tokenv,
+                    char *var) {
   if (argv == NULL || tokenv == NULL) {
     err_exit("no buffer when creating arg vector", ERRNOBUFFER);
   }
@@ -443,9 +446,19 @@ void tokenv_to_argv(size_t argc, char **argv, semantic_token_t **tokenv) {
       err_exit("no token buffer when setting arg vector", ERRNOBUFFER);
     }
     // set pointer addresses of argv
-    argv[i] = tokenv[i]->buf;
+    if (var != NULL) {
+      argv[i] = var;
+    } else {
+      argv[i] = tokenv[i]->buf;
+    }
   }
 }
+
+typedef struct cmd_ctx {
+  const semantic_token_t type;
+  const size_t argc;
+  const char **argv;
+} cmd_ctx_t;
 
 // parser orchestroator pull together iterator + command + args
 void simple_parser(const char *buf) {
@@ -464,11 +477,20 @@ void simple_parser(const char *buf) {
   // by convention use cmd ... args ... NULL terminate in NULL
   // return or set argc, command must end with NULL see execv
   parser_tokenize(input, token_vector, &arg_count);
-  parse_expr(arg_count, token_vector);
+  char *shell_var_val = 0;
+  parse_expr(arg_count, token_vector, &shell_var_val);
 
+  /*
+  // idea here that many tokens exist in vector, how to get the overall typ
+  cmd_ctx_t ctx = {
+      (*token_vector)->type,
+      arg_count,
+      arg_vector,
+  };
+  */
   // needed? *token type encoded in the vector pass back
   // simplify below
-  tokenv_to_argv(arg_count, arg_vector, token_vector);
+  tokenv_to_argv(arg_count, arg_vector, token_vector, shell_var_val);
 
   // handle builtins here
   if (strcmp(arg_vector[0], "exit") == MATCH)
@@ -484,9 +506,6 @@ void simple_parser(const char *buf) {
   // iterator loop
   for (int i = 0; i < (iterator == 0 ? 1 : iterator); i++) {
     if (strcmp(arg_vector[0], "echo") == MATCH) {
-      // exec_command(COMMAND
-      // exec_command(EXPRESSION
-      // exec_command(BUILTIN
       exec_command(BUILTIN, arg_count, arg_vector);
       break;
     }
@@ -516,9 +535,6 @@ void exec_command(int type, size_t argc, char **argv) {
         if (builtins[i].name == argv[0])
           builtins[i].builtin(argc, (void **)argv);
       }
-      break;
-    case EXPRESSION:
-      echo(argc, (void **)argv);
       break;
     default:
       // vp path aware
