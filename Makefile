@@ -20,8 +20,9 @@ OBJ := $(patsubst $(PATHSC)/%.c,$(PATHBD)/%.o,$(SRCS))
 all: $(PATHBN)/$(EXE)
 
 check: CFLAGS += -DTEST
-
-check: $(RUNNERS)
+check:
+	$(MAKE) clean
+	$(MAKE) $(RUNNERS) CFLAGS="$(CFLAGS)"
 	@for runner in $(RUNNERS); do ./$$runner; done
 
 # test_x -> x.c + test_x.c unity.c
