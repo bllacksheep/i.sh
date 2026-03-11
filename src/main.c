@@ -226,7 +226,7 @@ void parser_tokenize(const char *buf, semantic_token_t **tokenv, size_t *argn) {
   size_t argc = 0;
 
   while (*p != '\0') {
-    for (size_t i = 0; *p != ' ' && *p != '\0'; p++) {
+    for (size_t i = 0; *p != ' ' && *p != ';' && *p != '\0'; p++) {
       capture[i++] = *p;
     }
     // now that we have work bounded by ' ' or '\0' it's a token
