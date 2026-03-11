@@ -282,6 +282,8 @@ char *getval(char *k) {
   return p;
 }
 
+// semi-colon ; has to be handled before calling parse_expr and parse_expr needs
+// to be called for each colon separated expr
 // parse x=1;y=2 expressions adding variable creation and reference x=$y
 void parse_expr(size_t argc, semantic_token_t **tokenv, char **expr_value) {
   if (tokenv == NULL || *tokenv == NULL) {
@@ -476,6 +478,9 @@ void simple_parser(const char *buf) {
   parse_iterator(&input, &iterator);
   // by convention use cmd ... args ... NULL terminate in NULL
   // return or set argc, command must end with NULL see execv
+  //
+  //
+  // colon has to be handled here...
   parser_tokenize(input, token_vector, &arg_count);
   char *shell_var_val = 0;
   parse_expr(arg_count, token_vector, &shell_var_val);
