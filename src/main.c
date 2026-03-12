@@ -512,7 +512,7 @@ void shell_simple_parser(const char *buf) {
 
   shell_execution_pipeline(it, tc, tvec);
 
-  // shell_destroy_tokens(tc, tvec);
+  shell_destroy_tokens(tc, tvec);
   return;
 }
 
