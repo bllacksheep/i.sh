@@ -57,6 +57,7 @@ void repl() {
     return;
     break;
   default:
+    // will move to parser.c
     shell_simple_parser(input);
     break;
   }
