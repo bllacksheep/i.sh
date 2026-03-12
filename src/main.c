@@ -483,26 +483,52 @@ void shell_parser_promote_tokens_to_argv(size_t *argc, char **argv,
   *argc = cmdc;
 }
 
-// callback type
+typedef struct ish_state {
+  semantic_token_t **session_tokens;
+  size_t session_token_count;
+  size_t iterator_x; // user provided at cli
+  size_t iterator_i; // shell builtin 1
+  size_t iterator_j; // shell builtin 2
+                     // builtins
+                     // environment variables
+  size_t argc;
+  char *argv[MAX];
+  handler_t handler;
+} shell_state_t;
 
-void shell_execution_pipeline(size_t iter, size_t argc,
-                              semantic_token_t **tokenv) {
-  char *argv[MAX] = {0};
-  shell_parser_promote_tokens_to_argv(&argc, argv, tokenv);
+// use getter here
+static shell_state_t the_ish_shell_state = {0};
+
+// populate env vars and builtins here
+shell_state_t *shell_get_shell_state(void) {
+  // shell_check_shell_state();
+  // shell_init_shell_state();
+  return &the_ish_shell_state;
+}
+
+void shell_execution_pipeline() {
+  // if private can only hold a pointer
+  shell_state_t *ish = shell_get_shell_state();
+  shell_parser_promote_tokens_to_argv(&ish->argc, ish->argv,
+                                      ish->session_tokens);
 
   // should run at least once
-  for (int i = 0; i < (iter == 0 ? 1 : iter); i++) {
-    shell_execution_handler(argc, argv);
+  for (int i = 0; i < (ish->iterator_x == 0 ? 1 : ish->iterator_x); i++) {
+    shell_execution_handler(ish->argc, ish->argv);
   }
+  // shell_clean_shell_state();
 }
 
 void run(handler_t callback, size_t argc, void **argv) { callback(argc, argv); }
 
 // parser orchestroator pull together iterator + command + args
 void shell_simple_parser(const char *buf) {
-  // real parsing logic on c goes here
+  // won't need to get state here, just set it
+  shell_state_t *ish = shell_get_shell_state();
+
   size_t it = 0;
   size_t tc = 0;
+
   // soft max on num args per command
   semantic_token_t *tvec[MAX] = {0};
   const char *input = buf;
@@ -510,9 +536,13 @@ void shell_simple_parser(const char *buf) {
   shell_parser_create_tokens(input, tvec, &tc);
   shell_parser_evaluate_expressions(tc, tvec);
 
-  shell_execution_pipeline(it, tc, tvec);
+  // shell_set_shell_state(tvec, tc, it, i, j);
+  ish->session_tokens = tvec;
+  ish->iterator_x = it;
+  ish->session_token_count = tc;
 
-  shell_destroy_tokens(tc, tvec);
+  shell_execution_pipeline();
+  // shell_destroy_tokens(tc, tvec);
   return;
 }
 
@@ -526,6 +556,12 @@ void shell_execution_handler(size_t argc, char **argv) {
     err_exit("fork", EXIT_FAILURE);
     break;
   case 0:
+    /*
+    builtin_t builtin = get_builtin(argv);
+    if (builtin == NULL) {
+      builtin(argc, argv);
+    }
+    */
     // walks built ins every time and compares, kind of bogus
     for (size_t i = 0; i < MAX; i++) {
       // will move to hashmap in builtins.c

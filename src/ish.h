@@ -38,7 +38,7 @@ typedef struct builtin {
 typedef int (*handler_t)(size_t, void **);
 
 void shell_simple_parser(const char *);
-void shell_execution_pipeline(size_t, size_t, semantic_token_t **);
+void shell_execution_pipeline();
 builtin_t *get_builtins(void);
 ssize_t read_input(char *);
 void repl();
