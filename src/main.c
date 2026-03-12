@@ -57,7 +57,7 @@ void repl() {
     return;
     break;
   default:
-    simple_parser(input);
+    shell_simple_parser(input);
     break;
   }
 }
@@ -525,7 +525,7 @@ void run(handler_t callback, size_t iterator, size_t argc, void **argv) {
 }
 
 // parser orchestroator pull together iterator + command + args
-void simple_parser(const char *buf) {
+void shell_simple_parser(const char *buf) {
   // real parsing logic on c goes here
   size_t it = 0;
   size_t tc = 0;
@@ -533,24 +533,7 @@ void simple_parser(const char *buf) {
   semantic_token_t *tvec[MAX] = {0};
   const char *input = buf;
   shell_parser_evaluate_iterator(&input, &it);
-  // parser_create_token_vector
   shell_parser_create_tokens(input, tvec, &tc);
-  char *shell_var_val = 0;
-
-  /*
-   *
-  // y=2; x; x=1 $y
-  // 1 y=2 --- can be removed from tokens
-  // 2 ls
-  // 3 x=1 -- can be removed from tokens
-  // 4 $y --- can be set or retive value of y as token if exists
-  // if $y not exists, set token at "" empty
-   *
-   *
-   *  so final is ls $y  where if y not exists, set as ""
-   * */
-
-  // parser_evaluate_expressions
   shell_parser_evaluate_expressions(tc, tvec);
 
   command_handler(tc, tvec);

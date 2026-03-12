@@ -35,7 +35,7 @@ typedef struct builtin {
   char *name;
 } builtin_t;
 
-void simple_parser(const char *);
+void shell_simple_parser(const char *);
 builtin_t *get_builtins(void);
 ssize_t read_input(char *);
 void repl();
