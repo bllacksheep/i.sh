@@ -27,7 +27,7 @@ builtin_t *get_builtins(void) { return builtins; }
 
 // free and exit
 int free_exit(size_t argc, void **argv) {
-  destroy_tokens(argc, (semantic_token_t **)argv);
+  shell_destroy_tokens(argc, (semantic_token_t **)argv);
   exit(EXIT_SUCCESS);
   return 0;
 }
@@ -135,7 +135,7 @@ void has_iterator(const parse_state_t s) {
 
 // parse out the number from the start of a command if exists
 // step the command pointer forward to pos arg 1 the actual command name
-void parse_iterator(const char **buf, size_t *iter) {
+void shell_parser_evaluate_iterator(const char **buf, size_t *iter) {
   if (buf == NULL || *buf == NULL) {
     err_exit("parse iterator", ERRNOBUFFER);
   }
@@ -191,7 +191,7 @@ int is_builtin(char *buf) {
 }
 
 // set the type of the member argv
-void parser_set_token_type(semantic_token_t *token) {
+void shell_parser_set_token_type(semantic_token_t *token) {
   if (token->buf == NULL) {
     err_exit("no buffer when settting type", ERRNOBUFFER);
   }
@@ -208,14 +208,15 @@ void parser_set_token_type(semantic_token_t *token) {
 }
 
 // set the val of the member argv
-void parser_set_token_val(char *buf, semantic_token_t *token) {
+void shell_parser_set_token_val(char *buf, semantic_token_t *token) {
   if (token->buf != NULL)
     free(token->buf);
   token->buf = strdup(buf);
 }
 
 // create official argc argv used with exec
-void parser_tokenize(const char *buf, semantic_token_t **tokenv, size_t *argn) {
+void shell_parser_create_tokens(const char *buf, semantic_token_t **tokenv,
+                                size_t *argn) {
   if (buf == NULL || tokenv == NULL) {
     err_exit("parse args", EXIT_FAILURE);
   }
@@ -240,8 +241,8 @@ void parser_tokenize(const char *buf, semantic_token_t **tokenv, size_t *argn) {
       err_exit("alloc token", ERRALLOC);
     }
 
-    parser_set_token_val(capture, *token_vec);
-    parser_set_token_type(*token_vec);
+    shell_parser_set_token_val(capture, *token_vec);
+    shell_parser_set_token_type(*token_vec);
     // count arg
     argc++;
     // next token
@@ -260,7 +261,7 @@ void parser_tokenize(const char *buf, semantic_token_t **tokenv, size_t *argn) {
 }
 
 // destroy args allocated with strdup
-void destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
+void shell_destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
   for (size_t i = 0; i < tokenc; i++) {
     if (tokenv[i] != NULL) {
       if (tokenv[i]->buf != NULL)
@@ -281,18 +282,10 @@ void destroy_args(size_t argc, char **argv) {
   }
 }
 
-char *getval(char *k) {
-  char *p = strdup("1234");
-  if (p == NULL) {
-    err_exit("no buffer when getting val", ERRNOBUFFER);
-  }
-  return p;
-}
-
 // semi-colon ; has to be handled before calling parse_expr and parse_expr needs
 // to be called for each colon separated expr
 // parse x=1;y=2 expressions adding variable creation and reference x=$y
-void parse_expr(size_t argc, semantic_token_t **tokenv) {
+void shell_parser_evaluate_expressions(size_t argc, semantic_token_t **tokenv) {
   if (tokenv == NULL || *tokenv == NULL) {
     err_exit("no expression buffer", ERRNOBUFFER);
   }
@@ -451,7 +444,8 @@ int echo(size_t argc, void **argv) {
   return 0;
 }
 
-void tokenv_to_argv(size_t argc, char **argv, semantic_token_t **tokenv) {
+void shell_parser_build_argv_from_tokens(size_t argc, char **argv,
+                                         semantic_token_t **tokenv) {
   if (argv == NULL) {
     err_exit("no buffer when creating arg vector", ERRNOBUFFER);
   }
@@ -482,7 +476,7 @@ void run(handler_t callback, size_t iterator, size_t argc, void **argv);
 void command_handler(size_t argc, semantic_token_t **tokenv) {
   char *argv[MAX] = {0};
   // convert_tokenv_to_exec_argv();
-  tokenv_to_argv(argc, argv, tokenv);
+  shell_parser_build_argv_from_tokens(argc, argv, tokenv);
   /*
 
   // handle builtins here
@@ -519,9 +513,9 @@ void simple_parser(const char *buf) {
   // soft max on num args per command
   semantic_token_t *tvec[MAX] = {0};
   const char *input = buf;
-  parse_iterator(&input, &it);
+  shell_parser_evaluate_iterator(&input, &it);
   // parser_create_token_vector
-  parser_tokenize(input, tvec, &tc);
+  shell_parser_create_tokens(input, tvec, &tc);
   char *shell_var_val = 0;
 
   /*
@@ -538,11 +532,11 @@ void simple_parser(const char *buf) {
    * */
 
   // parser_evaluate_expressions
-  parse_expr(tc, tvec);
+  shell_parser_evaluate_expressions(tc, tvec);
 
   command_handler(tc, tvec);
 
-  // destroy_tokens(tc, tvec);
+  // shell_destroy_tokens(tc, tvec);
   return;
 }
 
