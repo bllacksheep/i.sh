@@ -497,19 +497,20 @@ typedef struct ish_state {
 } shell_state_t;
 
 // use getter here
-static shell_state_t the_ish_shell_state = {0};
+static shell_state_t ishell = {0};
 
 // populate env vars and builtins here
 shell_state_t *shell_get_shell_state(void) {
   // shell_check_shell_state();
   // shell_init_shell_state();
-  return &the_ish_shell_state;
+  return &ishell;
 }
 
 void shell_execution_pipeline() {
   // if private can only hold a pointer
   shell_state_t *ish = shell_get_shell_state();
 
+  // shell functions will run this
   // should run at least once
   for (int i = 0; i < (ish->iterator_x == 0 ? 1 : ish->iterator_x); i++) {
     shell_execution_handler(ish->argc, ish->argv);
@@ -517,29 +518,48 @@ void shell_execution_pipeline() {
   // shell_clean_shell_state();
 }
 
-void run(handler_t callback, size_t argc, void **argv) { callback(argc, argv); }
+void shell_run_shell_command(handler_t callback, size_t argc, void **argv) {
+  callback(argc, argv);
+}
+
+void shell_set_shell_argv(shell_state_t *ishell_state, char **argv) {
+  memcpy(ishell_state->argv, argv, sizeof(**argv));
+}
+
+void shell_set_shell_tokens(shell_state_t *ishell_state,
+                            semantic_token_t **tokenvec) {
+  memcpy(ishell_state->session_tokens, tokenvec, sizeof(**tokenvec));
+}
+
+void shell_set_shell_it_x(shell_state_t *st, size_t x) { st->iterator_x = x; }
+
+void shell_set_shell_it_i(shell_state_t *st, size_t i) { st->iterator_i = i; }
+
+void shell_set_shell_it_j(shell_state_t *st, size_t j) { st->iterator_j = j; }
+
+void shell_set_shell_tc(shell_state_t *st, size_t tc) {
+  st->session_token_count = tc;
+}
+
+void shell_set_shell_argc(shell_state_t *st, size_t argc) { st->argc = argc; }
+
+void shell_set_command_handler(shell_state_t *st, char **argv) {
+  // determine the handler
+}
 
 void shell_set_shell_state(semantic_token_t **tokens, size_t token_count,
                            size_t it_x, size_t it_i, size_t it_j, size_t ac,
-                           char **av, handler_t handle) {
+                           char **av) {
 
   shell_state_t *ish = shell_get_shell_state();
-  // shell_set_shell_tokens(ish, tokens)
-  ish->session_tokens = tokens;
-  // shell_set_shell_it_x(ish, it_x)
-  ish->iterator_x = it_x;
-  // shell_set_shell_it_i(ish, it_i)
-  ish->iterator_i = it_i;
-  // shell_set_shell_j(ish, it_j)
-  ish->iterator_j = it_j;
-  // shell_set_shell_tc(ish, token_count)
-  ish->session_token_count = token_count;
-  // shell_set_shell_argc(ish, ac)
-  ish->argc = ac;
-  // shell_set_shell_argv(ish, argv)
-  ish->argv = av; // copy proper
-  // shell_set_command_handler(ish);
-  // should set shell handler here, and promote vars
+  shell_set_shell_tokens(ish, tokens);
+  shell_set_shell_it_x(ish, it_x);
+  shell_set_shell_it_i(ish, it_i);
+  shell_set_shell_it_j(ish, it_j);
+  shell_set_shell_tc(ish, token_count);
+  shell_set_shell_argc(ish, ac);
+  shell_set_shell_argv(ish, av);
+  shell_set_command_handler(ish, av);
 }
 
 // parser orchestroator pull together iterator + command + args
@@ -557,6 +577,7 @@ void shell_simple_parser(const char *buf) {
   shell_parser_evaluate_expressions(tc, tvec);
   shell_parser_promote_tokens_to_argv(&argc, argv, tvec);
 
+  // not set up yet
   size_t i = 0;
   size_t j = 0;
 
@@ -592,7 +613,7 @@ void shell_execution_handler(size_t argc, char **argv) {
       if (strncmp(builtins[i].name, argv[0], 30) == MATCH) {
         handler_t hd = builtins[i].builtin;
         // if run errors how to handle?
-        run(hd, argc, (void **)argv);
+        shell_run_shell_command(hd, argc, (void **)argv);
         break;
       }
     }
