@@ -30,7 +30,7 @@ static shell_state_t ishell = {0};
 void shell_execution_pipeline();
 ssize_t shell_read_input_stream(char *);
 void shell_execution_handler(size_t, char **);
-void shell_run_command(handler_t callback, size_t argc, void **argv);
+void shell_run_shell_command(handler_t callback, size_t argc, void **argv);
 void mystrcspn(char **);
 
 void shell_repl() {
@@ -108,19 +108,14 @@ shell_state_t *shell_get_shell_state(void) {
 
 void shell_execution_pipeline() {
   // if private can only hold a pointer
-  shell_state_t *ish = shell_get_shell_state();
+  shell_state_t *st = shell_get_shell_state();
 
   // shell functions will run this
   // should run at least once
-  for (int i = 0; i < (ish->iterator_x == 0 ? 1 : ish->iterator_x); i++) {
-    shell_run_shell_command(ish->handler, ish->argc, ish->argv);
+  for (int i = 0; i < (st->iterator_x == 0 ? 1 : st->iterator_x); i++) {
+    st->handler(st->argc, (void **)st->argv);
   }
   // shell_clean_shell_state();
-}
-
-void shell_run_shell_command(handler_t callback, size_t argc, void **argv) {
-  // some checks
-  callback(argc, argv);
 }
 
 void shell_set_shell_argv(char **argv) {
@@ -158,21 +153,11 @@ void shell_set_shell_argc(size_t argc) {
   st->argc = argc;
 }
 
-builtin_t *shell_get_shell_builtins(char *c) { return shell_get_builtin(c); }
-
 void shell_set_shell_builtin(char *cmd) {
-  builtin_t *handler = shell_get_shell_builtins(cmd);
+  builtin_t *handler = builtins_ht_get_fn(cmd);
   shell_state_t *st = shell_get_shell_state();
   if (handler != NULL)
     st->handler = handler;
-}
-
-void shell_run_shell_command(shell_state_t *st) {
-  handler_t *hd = shell_get_shell_builtins((*st)->argv[0]);
-  if (hd != NULL) {
-    shell_run_shell_command((void *)hd, st->argc, (void **)st->argv);
-  }
-  shell_run_shell_command((void *)execvp, st->argc, (void **)st->argv);
 }
 
 void shell_set_shell_session_state(semantic_token_t **tokens,
