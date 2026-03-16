@@ -12,8 +12,8 @@
 #define MAX_ARGV_LENGTH 10
 
 typedef struct ish_state {
-  semantic_token_t **session_tokens;
-  size_t session_token_count;
+  semantic_token_t **tokens;
+  size_t token_count;
   size_t iterator_x; // user provided at cli
   size_t iterator_i; // shell builtin 1
   size_t iterator_j; // shell builtin 2
@@ -123,9 +123,10 @@ void shell_set_shell_argv(char **argv) {
   memcpy(st->argv, argv, sizeof(**argv));
 }
 
-void shell_set_shell_tokens(semantic_token_t **tokenvec) {
+void shell_set_shell_tokens(semantic_token_t **tokenvec, size_t count) {
   shell_state_t *st = shell_get_shell_state();
-  memcpy(st->session_tokens, tokenvec, sizeof(**tokenvec));
+  st->token_count = count;
+  parser_token_copy(st->tokens, tokenvec, st->token_count);
 }
 
 void shell_set_shell_it_x(size_t x) {
@@ -141,11 +142,6 @@ void shell_set_shell_it_i(size_t i) {
 void shell_set_shell_it_j(size_t j) {
   shell_state_t *st = shell_get_shell_state();
   st->iterator_j = j;
-}
-
-void shell_set_shell_tc(size_t tc) {
-  shell_state_t *st = shell_get_shell_state();
-  st->session_token_count = tc;
 }
 
 void shell_set_shell_argc(size_t argc) {
@@ -164,11 +160,10 @@ void shell_set_shell_session_state(semantic_token_t **tokens,
                                    size_t token_count, size_t it_x, size_t it_i,
                                    size_t it_j, size_t ac, char **av) {
 
-  shell_set_shell_tokens(tokens);
+  shell_set_shell_tokens(tokens, token_count);
   shell_set_shell_it_x(it_x);
   shell_set_shell_it_i(it_i);
   shell_set_shell_it_j(it_j);
-  shell_set_shell_tc(token_count);
   shell_set_shell_argc(ac);
   shell_set_shell_argv(av);
   shell_set_shell_builtin(av[0]);

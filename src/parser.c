@@ -407,7 +407,9 @@ void parser_simple_parser(const char *buf) {
   char *argv[MAX] = {0};
 
   // soft max on num args per command
+  // who is going to own this
   semantic_token_t *tvec[MAX] = {0};
+
   const char *input = buf;
   parser_evaluate_iterator(&input, &it);
   parser_create_tokens(input, tvec, &tc);
@@ -418,9 +420,7 @@ void parser_simple_parser(const char *buf) {
   size_t i = 0;
   size_t j = 0;
 
-  // TODO: WILL NEED OT MOVE
   shell_set_shell_session_state(tvec, tc, it, i, j, argc, argv);
-
   return;
 }
 
