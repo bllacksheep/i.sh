@@ -1,7 +1,6 @@
 #include "shell.h"
 #include "builtins.h"
 #include "errors.h"
-#include "ht.h"
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +32,6 @@ ssize_t shell_read_input_stream(char *);
 void shell_execution_handler(size_t, char **);
 void shell_run_command(handler_t callback, size_t argc, void **argv);
 void mystrcspn(char **);
-void shell_destroy_tokens(size_t, semantic_token_t **);
 
 void shell_repl() {
   char input[MAX_INPUT_STREAM + 1] = {0};
@@ -53,7 +51,7 @@ void shell_repl() {
   default:
     parser_simple_parser(input);
     shell_execution_pipeline();
-    // shell_destroy_tokens(tc, tvec);
+    // parser_destroy_tokens(tc, tvec);
     break;
   }
 }
@@ -99,19 +97,6 @@ void mystrcspn(char **c) {
   while ((*c)[len] != '\n')
     len++;
   (*c)[len] = '\0';
-}
-
-// destroy args allocated with strdup
-void shell_destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
-  for (size_t i = 0; i < tokenc; i++) {
-    if (tokenv[i] != NULL) {
-      if (tokenv[i]->buf != NULL)
-        // allocated by strdup at parse time
-        free(tokenv[i]->buf);
-      // allocated at arg initialization
-      free(tokenv[i]);
-    }
-  }
 }
 
 // populate env vars and builtins here

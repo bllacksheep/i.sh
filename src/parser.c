@@ -423,3 +423,16 @@ void parser_simple_parser(const char *buf) {
 
   return;
 }
+
+// destroy args allocated with strdup
+void parser_destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
+  for (size_t i = 0; i < tokenc; i++) {
+    if (tokenv[i] != NULL) {
+      if (tokenv[i]->buf != NULL)
+        // allocated by strdup at parse time
+        free(tokenv[i]->buf);
+      // allocated at arg initialization
+      free(tokenv[i]);
+    }
+  }
+}
