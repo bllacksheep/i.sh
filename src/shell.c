@@ -22,6 +22,7 @@ typedef struct ish_state {
   size_t argc;
   char *argv[MAX_ARGV_LENGTH];
   handler_t handler;
+  builtin_t builtins;
 } shell_state_t;
 
 // use getter here
@@ -30,10 +31,12 @@ static shell_state_t ishell = {0};
 void shell_execution_pipeline();
 ssize_t shell_read_input_stream(char *);
 void shell_execution_handler(size_t, char **);
-void shell_run_shell_command(handler_t callback, size_t argc, void **argv);
+void shell_set_shell_state(semantic_token_t **, size_t, size_t, size_t, size_t,
+                           size_t, char **);
+void shell_run_shell_command(handler_t, size_t, void **);
 void mystrcspn(char **);
 
-void shell_repl() {
+void shell_start_repl() {
   char input[MAX_INPUT_STREAM + 1] = {0};
   printf("> ");
   if (fflush(stdout) == EOF) {
@@ -118,55 +121,68 @@ void shell_execution_pipeline() {
   // shell_clean_shell_state();
 }
 
-void shell_set_shell_argv(char **argv) {
+void shell_set_input_argv(size_t argc, char **argv) {
   shell_state_t *st = shell_get_shell_state();
-  memcpy(st->argv, argv, sizeof(**argv));
+  memcpy(st->argv, argv, sizeof(*argv) * argc);
 }
 
-void shell_set_shell_tokens(semantic_token_t **tokenvec, size_t count) {
+void shell_set_input_tokens(semantic_token_t **tokenvec, size_t count) {
   shell_state_t *st = shell_get_shell_state();
   st->token_count = count;
-  parser_token_copy(st->tokens, tokenvec, st->token_count);
+  // assumes st->tokens is cleaned up
+  parser_copy_tokens(st->tokens, tokenvec, st->token_count);
 }
 
-void shell_set_shell_it_x(size_t x) {
+void shell_set_input_it_x(size_t x) {
   shell_state_t *st = shell_get_shell_state();
   st->iterator_x = x;
 }
 
-void shell_set_shell_it_i(size_t i) {
+void shell_set_input_it_i(size_t i) {
   shell_state_t *st = shell_get_shell_state();
   st->iterator_i = i;
 }
 
-void shell_set_shell_it_j(size_t j) {
+void shell_set_input_it_j(size_t j) {
   shell_state_t *st = shell_get_shell_state();
   st->iterator_j = j;
 }
 
-void shell_set_shell_argc(size_t argc) {
+void shell_set_input_argc(size_t argc) {
   shell_state_t *st = shell_get_shell_state();
   st->argc = argc;
 }
 
-void shell_set_shell_builtin(char *cmd) {
-  builtin_t *handler = builtins_ht_get_fn(cmd);
+// handler set to execvp by default
+void shell_set_shell_builtins(ht_table_t builtins) {
   shell_state_t *st = shell_get_shell_state();
-  if (handler != NULL)
-    st->handler = handler;
+  st->builtins = builtins;
 }
 
-void shell_set_shell_session_state(semantic_token_t **tokens,
-                                   size_t token_count, size_t it_x, size_t it_i,
-                                   size_t it_j, size_t ac, char **av) {
+// set up default handler here
+handler_t shell_get_default_handler() { return NULL; }
 
-  shell_set_shell_tokens(tokens, token_count);
-  shell_set_shell_it_x(it_x);
-  shell_set_shell_it_i(it_i);
-  shell_set_shell_it_j(it_j);
-  shell_set_shell_argc(ac);
-  shell_set_shell_argv(av);
-  shell_set_shell_builtin(av[0]);
+// find of feel like hanlder just needs to be void* at this point
+void shell_set_input_handler(char *command) {
+  shell_state_t *st = shell_get_shell_state();
+  handler_t handle = bt_get_fn(st->builtins, command);
+  if (handle != NULL) {
+    st->handler = handle;
+  }
+  st->handler = shell_get_default_handler();
+}
+
+void shell_set_input_state(semantic_token_t **tokens, size_t token_count,
+                           size_t it_x, size_t it_i, size_t it_j, size_t ac,
+                           char **av) {
+
+  shell_set_input_tokens(tokens, token_count);
+  shell_set_input_it_x(it_x);
+  shell_set_input_it_i(it_i);
+  shell_set_input_it_j(it_j);
+  shell_set_input_argc(ac);
+  shell_set_input_argv(ac, av);
+  shell_set_input_handler(av[0]);
 }
 
 // find the builtin to run or execvp

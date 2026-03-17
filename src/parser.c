@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "builtins.h"
 #include "errors.h"
+#include "ht.h"
 #include "shell.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -12,6 +13,9 @@
 #define MAX 100
 
 typedef struct parse_state parse_state_t;
+
+// decoupled from ht.c
+static ht_table_t *ht_table = NULL;
 
 typedef struct parse_state {
   const char *capture;
@@ -434,5 +438,18 @@ void parser_destroy_tokens(size_t tokenc, semantic_token_t **tokenv) {
       // allocated at arg initialization
       free(tokenv[i]);
     }
+  }
+}
+
+// inbuf is a stack buffer from call chain
+void parser_copy_tokens(semantic_token_t **stoutbuf, semantic_token_t **inbuf,
+                        size_t token_count) {
+  for (size_t i = 0; i < token_count; i++) {
+    stoutbuf[i] = calloc(1, sizeof(semantic_token_t *));
+    if (stoutbuf[i] == NULL) {
+      fprintf(stderr, "failed to copy token");
+      exit(EXIT_FAILURE);
+    }
+    *stoutbuf[i] = *inbuf[i];
   }
 }

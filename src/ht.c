@@ -8,9 +8,8 @@
 static char HT_TOMBSTONE_SENTINEL = 0;
 static void *const HT_TOMBSTONE = &HT_TOMBSTONE_SENTINEL;
 
-STATIC ht_table_t *ht_table = NULL;
-
 // E n-1 s[i]**n-1-i
+//
 // i = 0
 // hash = hash * prime + char
 // exactly equal to above
@@ -32,11 +31,11 @@ STATIC unsigned item_hash(const char *item_key, const size_t item_key_len,
   return (hash_a + (attempt * (hash_b + 1))) % HT_MAX;
 }
 
-STATIC const ht_item_t *item_lookup_slot(const ht_table_t *tbl,
+STATIC const ht_item_t *item_lookup_slot(const ht_table_t ht,
                                          const char *item_key,
                                          const size_t item_key_len) {
 
-  if (tbl == NULL) {
+  if (ht == NULL) {
     fprintf(stderr, "i.sh: ht no table, code: %d", ERRHTNOTABLE);
     exit(ERRHTNOTABLE);
   }
@@ -54,7 +53,7 @@ STATIC const ht_item_t *item_lookup_slot(const ht_table_t *tbl,
   unsigned attempt = 0;
   unsigned try = item_hash(item_key, item_key_len, attempt);
 
-  ht_item_t *base = (ht_item_t *)tbl;
+  ht_item_t *base = (ht_item_t *)ht;
   const ht_item_t *item = &base[try];
 
   if (item == NULL) {
@@ -81,35 +80,35 @@ STATIC const ht_item_t *item_lookup_slot(const ht_table_t *tbl,
   return NULL;
 }
 
-// initialize a table if not already initialized and return pointer to first
-// elem
-STATIC ht_table_t *table_init(void) {
-  if (ht_table != NULL) {
-    return ht_table;
-  }
-  ht_table = calloc(1, sizeof(ht_table_t));
+// ht_table_t is now declared as a pointer type in .h
+ht_table_t ht_create_table(size_t count) {
+  ht_table_t ht_table = calloc(1, sizeof(struct ht_table));
+
   if (ht_table == NULL) {
     fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTINIT);
     exit(ERRHTINIT);
   }
-  return ht_table;
-}
+  ht_table->count = count;
+  ht_table->items = calloc(count, sizeof(ht_item_t *));
+  if (ht_table->items == NULL) {
+    fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTINIT);
+    exit(ERRHTINIT);
+  }
 
-// return a table init if not exists
-STATIC ht_table_t *table_get(void) {
-  if (ht_table == NULL)
-    return table_init();
+  for (size_t i = 0; i < ht_table->count; i++) {
+    // each items[i] 0x0 expects a pointer to type of size ht_item_t
+    ht_table->items[i] = calloc(1, sizeof(ht_item_t));
+  }
   return ht_table;
 }
 
 // caller must check is val NULL
-const char *ht_get_var(const char *item_k) {
+const char *ht_get_item(ht_table_t table, const char *item_k) {
   if (item_k == NULL) {
     fprintf(stderr, "i.sh: ht no buffer, code: %d", ERRHTNOBUF);
     exit(ERRHTNOBUF);
   }
 
-  ht_table_t *table = table_get();
   if (table == NULL) {
     fprintf(stderr, "i.sh: failed to get ht table, code: %d", ERRHTGET);
     exit(ERRHTGET);
@@ -148,14 +147,13 @@ STATIC size_t key_get_len(const char *k) {
   return kl_safe;
 }
 
-int ht_put_var(const char *item_k, const char *item_v) {
+int ht_put_item(ht_table_t table, const char *item_k, const char *item_v) {
 
   if (item_k == NULL || item_v == NULL) {
     fprintf(stderr, "i.sh: ht no buffer, code: %d", ERRHTNOBUF);
     exit(ERRHTNOBUF);
   }
 
-  ht_table_t *table = table_get();
   if (table == NULL) {
     fprintf(stderr, "i.sh: failed to get ht table, code: %d", ERRHTGET);
     exit(ERRHTGET);
@@ -185,13 +183,11 @@ int ht_put_var(const char *item_k, const char *item_v) {
 }
 
 // unset in shell, remove an item by freeing it's k,v and setting to NULL
-int ht_del_var(const char *item_k) {
+int ht_del_item(ht_table_t table, const char *item_k) {
   if (item_k == NULL) {
     fprintf(stderr, "i.sh: no item key to delete, code: %d", ERRHTDEL);
     exit(ERRHTDEL);
   }
-
-  ht_table_t *table = table_get();
 
   if (table == NULL) {
     fprintf(stderr, "i.sh: failed to initialize ht table, code: %d", ERRHTDEL);

@@ -1,5 +1,5 @@
+#include "ht.h"
 #include <unistd.h>
-
 #define HT_MAX 1009
 #define HT_MAX_KEY_LEN 25
 #define HT_PRIME_1 31u
@@ -13,10 +13,13 @@
 
 typedef struct ht_item {
   const char *key;
-  const char *value;
+  const void *value;
 } ht_item_t;
 
-typedef ht_item_t ht_table_t[HT_MAX];
+struct ht_table {
+  ht_item_t **items;
+  size_t count;
+};
 
 #ifdef TEST
 // so the test file can find it

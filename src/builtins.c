@@ -10,14 +10,13 @@
 
 #define MAX_NUM_BUILTINS 10
 
-builtin_t builtins[MAX_NUM_BUILTINS] = {
-    {echo, "echo"},
-    {quit, "exit"},
-    {quit, "q"},
-    {unset, "unset"},
-};
+typedef struct ht_builtin {
+  char *key;
+  int (*value)(size_t, void *[]);
+} ht_item_t;
 
-builtin_t *get_builtins(void) { return builtins; }
+// decoupled from ht.c
+static ht_table_t *ht_table = NULL;
 
 // free and exit
 int quit(size_t argc, void **argv) {
@@ -28,17 +27,7 @@ int quit(size_t argc, void **argv) {
 
 int unset(size_t argc, void **argv) { return ht_del_var(argv[1]); }
 
-int is_builtin(char *buf) {
-  if (buf == NULL) {
-    err_exit("no buffer in builtin", ERRNOBUFFER);
-  }
-  builtin_t *b = get_builtins();
-  for (int i = 0; i < MAX_NUM_BUILTINS && b[i].name != NULL; i++) {
-    if (strcmp(buf, b[i].name) == MATCH)
-      return MATCH;
-  }
-  return !MATCH;
-}
+int is_builtin(char *buf) {}
 
 int echo(size_t argc, void **argv) {
   char **args = (char **)argv;
@@ -46,4 +35,16 @@ int echo(size_t argc, void **argv) {
     printf("%s ", args[i]);
   putchar('\n');
   return 0;
+}
+
+handler_t bt_get_fn(ht_table_t table, char *key) {
+  void *handle = (void *)ht_get_item(table, key);
+}
+builtin_t *builtins_get_handler(char *builtin);
+void builtins_init_handlers();
+void builtins_init_handlers() {
+
+  ht_put_item("echo", echo);
+  ht_put_item("unset", unset);
+  ht_put_item("quit", exit);
 }
