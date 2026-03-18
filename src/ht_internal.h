@@ -13,7 +13,12 @@
 
 typedef struct ht_item {
   const char *key;
-  const void *value;
+  const type_t type;
+  // could just use void here...
+  union {
+    const char *string;
+    const void *handler;
+  } value;
 } ht_item_t;
 
 struct ht_table {

@@ -147,7 +147,8 @@ STATIC size_t key_get_len(const char *k) {
   return kl_safe;
 }
 
-int ht_put_item(ht_table_t table, const char *item_k, const void *item_v) {
+int ht_put_item(ht_table_t table, const char *item_k, const void *item_v,
+                const enum item_type type) {
 
   if (item_k == NULL || item_v == NULL) {
     fprintf(stderr, "i.sh: ht no buffer, code: %d", ERRHTNOBUF);
@@ -173,12 +174,19 @@ int ht_put_item(ht_table_t table, const char *item_k, const void *item_v) {
     return EXIT_FAILURE;
   }
 
-  item->value = strdup(item_v);
-  if (item->value == NULL) {
-    fprintf(stderr, "i.sh: failed to initialize value %s, code: %d", item_v,
-            ERRHTINS);
-    return EXIT_FAILURE;
+  switch (type) {
+  case FUNCTION:
+    item->type = type;
+    item->value.handler = item_v;
+    break;
+  case STRING:
+    item->type = type;
+    item->value.string = item_v;
+    break;
+  default:
+    break;
   }
+
   return EXIT_SUCCESS;
 }
 
