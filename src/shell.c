@@ -12,8 +12,8 @@
 #define MAX_ARGV_LENGTH 10
 
 typedef struct ish_state {
-  semantic_token_t **tokenvec;
-  size_t tokenvec_count;
+  semantic_token_t **token_vector;
+  size_t token_vec_count;
   size_t iterator_x; // user provided at cli
   size_t iterator_i; // shell builtin 1
   size_t iterator_j; // shell builtin 2
@@ -141,9 +141,9 @@ void shell_set_input_argv(size_t argc, char **argv) {
 
 void shell_set_input_tokens(semantic_token_t **tokenvec, size_t count) {
   shell_state_t *st = shell_get_shell_state();
-  st->token_count = count;
+  st->token_vec_count = count;
   // assumes st->tokens is cleaned up
-  parser_copy_tokens(st->tokens, tokenvec, st->token_count);
+  parser_copy_tokens(st->token_vector, tokenvec, st->token_vec_count);
 }
 
 void shell_set_input_it_x(size_t x) {
