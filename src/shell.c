@@ -109,6 +109,11 @@ shell_state_t *shell_get_shell_state(void) {
   return &ishell;
 }
 
+semantic_token_t **shell_get_token_table(void) {
+  shell_state_t *st = shell_get_shell_state();
+  return st->tokens;
+}
+
 void shell_execution_pipeline() {
   // if private can only hold a pointer
   shell_state_t *st = shell_get_shell_state();

@@ -119,7 +119,7 @@ int is_expression(char *buf) {
   }
   return !MATCH;
 }
-
+/*
 int is_builtin(char *buf) {
   if (buf == NULL) {
     err_exit("no buffer in builtin", ERRNOBUFFER);
@@ -131,6 +131,7 @@ int is_builtin(char *buf) {
   }
   return !MATCH;
 }
+*/
 
 // set the type of the member argv
 void parser_set_token_type(semantic_token_t *token) {
@@ -412,12 +413,12 @@ void parser_simple_parser(const char *buf) {
   size_t argc = 0;
   char *argv[TOKEN_MAX_COUNT] = {0};
 
-  // soft max on num args per command
-  // who is going to own this
-  semantic_token_t *tvec[TOKEN_MAX_COUNT] = {0};
-
   const char *input = buf;
   parser_evaluate_iterator(&input, &it);
+
+  // soft max on num args per command
+  // who is going to own this
+  semantic_token_t **tvec = shell_get_token_table();
   parser_create_tokens(input, tvec, &tc);
   parser_evaluate_expressions(tc, tvec);
   parser_promote_tokens_to_argv(&argc, argv, tvec);
