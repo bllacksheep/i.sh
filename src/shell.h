@@ -4,6 +4,7 @@
 #include "parser.h"
 #include <unistd.h>
 
+void init_shell();
 void shell_start_repl();
 void shell_destroy_tokens(size_t, semantic_token_t **);
 // should probsbly be command state now

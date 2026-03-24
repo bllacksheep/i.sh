@@ -236,3 +236,10 @@ void shell_execution_handler(size_t argc, char **argv) {
     wait(NULL);
   }
 }
+
+void init_shell() {
+  // create shell builtins table
+  bt_create_table();
+  // create parser table
+  parser_create_table();
+}
