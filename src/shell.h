@@ -12,5 +12,5 @@ void shell_set_command_state(semantic_token_t **, size_t, size_t, size_t,
                              size_t, size_t, char **);
 
 void shell_set_shell_builtins(ht_table_t);
-semantic_token_t **shell_get_token_table(void);
+ht_table_t shell_get_token_table(void);
 #endif

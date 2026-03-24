@@ -13,7 +13,7 @@
 
 typedef struct ish_state {
   semantic_token_t **tokenvec;
-  size_t token_count;
+  size_t tokenvec_count;
   size_t iterator_x; // user provided at cli
   size_t iterator_i; // shell builtin 1
   size_t iterator_j; // shell builtin 2
@@ -21,6 +21,7 @@ typedef struct ish_state {
                      // environment variables
   size_t argc;
   char *argv[MAX_ARGV_LENGTH];
+
   handler_t handler;
   // pointer to tables, required by ht api
   ht_table_t builtins_table;
@@ -111,9 +112,14 @@ shell_state_t *shell_get_shell_state(void) {
   return &ishell;
 }
 
-semantic_token_t **shell_get_token_table(void) {
+semantic_token_t **shell_get_tokenvec_table(void) {
   shell_state_t *st = shell_get_shell_state();
-  return st->tokens;
+  return st->tokenvec;
+}
+
+ht_table_t shell_get_token_table(void) {
+  shell_state_t *st = shell_get_shell_state();
+  return st->token_table;
 }
 
 void shell_execution_pipeline() {

@@ -297,7 +297,8 @@ void parser_evaluate_expressions(size_t argc, semantic_token_t **tokenv) {
         if ((*token_vec)->buf != NULL)
           free((*token_vec)->buf);
         */
-        (*token_vec)->buf = (char *)ht_get_item(key);
+        ht_table_t token_table = shell_get_token_table();
+        (*token_vec)->buf = (char *)ht_get_item(token_table, key);
         (*token_vec)->type = COMMAND;
         state = DONE;
         break;
@@ -333,7 +334,8 @@ void parser_evaluate_expressions(size_t argc, semantic_token_t **tokenv) {
       if (*curr_token_pos == '\0' || *curr_token_pos == ' ') {
         // retain shell session variable state here
         // add value to hash table
-        if (ht_put_item(key, val, STRING) == EXIT_SUCCESS) {
+        ht_table_t token_table = shell_get_token_table();
+        if (ht_put_item(token_table, key, val, STRING) == EXIT_SUCCESS) {
           // since this is an expression this token is no longer useful
           state = NEXT;
           break;
