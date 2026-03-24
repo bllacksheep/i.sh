@@ -457,7 +457,9 @@ void parser_copy_tokens(semantic_token_t **stoutbuf, semantic_token_t **inbuf,
   }
 }
 
-void parser_create_table(void) {
+ht_table_t parser_create_table(void) {
   ht_table_t ht = ht_create_table(TOKEN_MAX_COUNT);
-  shell_set_shell_builtins(ht);
+  if (ht != NULL)
+    return ht;
+  return NULL;
 }

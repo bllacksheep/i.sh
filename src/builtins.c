@@ -57,8 +57,8 @@ void bt_init_builtins_table(ht_table_t table) {
   }
 }
 
-void bt_create_table(void) {
+ht_table_t bt_create_table(void) {
   ht_table_t ht = ht_create_table(bt_get_fn_count());
   bt_init_builtins_table(ht);
-  shell_set_shell_builtins(ht);
+  return ht;
 }

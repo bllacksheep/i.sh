@@ -5,7 +5,7 @@
 
 typedef int (*handler_t)(size_t, void **);
 
-void bt_create_table(void);
+ht_table_t bt_create_table(void);
 size_t bt_get_fn_count(void);
 void bt_init_builtins(ht_table_t);
 int echo(size_t, void **);

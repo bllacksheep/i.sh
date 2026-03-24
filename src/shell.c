@@ -12,7 +12,7 @@
 #define MAX_ARGV_LENGTH 10
 
 typedef struct ish_state {
-  semantic_token_t **tokens;
+  semantic_token_t **tokenvec;
   size_t token_count;
   size_t iterator_x; // user provided at cli
   size_t iterator_i; // shell builtin 1
@@ -22,7 +22,9 @@ typedef struct ish_state {
   size_t argc;
   char *argv[MAX_ARGV_LENGTH];
   handler_t handler;
-  builtin_t builtins;
+  // pointer to tables, required by ht api
+  ht_table_t builtins_table;
+  ht_table_t token_table;
 } shell_state_t;
 
 // use getter here
@@ -237,9 +239,27 @@ void shell_execution_handler(size_t argc, char **argv) {
   }
 }
 
+void shell_set_token_table(ht_table_t ht) {
+  shell_state_t *st = shell_get_shell_state();
+  if (ht != NULL) {
+    st->token_table = ht;
+    return;
+  }
+  return;
+}
+
+void shell_set_builtin_table(ht_table_t ht) {
+  shell_state_t *st = shell_get_shell_state();
+  if (ht != NULL) {
+    st->builtins_table = ht;
+    return;
+  }
+  return;
+}
+
 void init_shell() {
   // create shell builtins table
-  bt_create_table();
+  shell_set_builtin_table(bt_create_table());
   // create parser table
-  parser_create_table();
+  shell_set_token_table(parser_create_table());
 }
