@@ -52,19 +52,22 @@ STATIC const ht_item_t *item_lookup_slot(const ht_table_t ht,
 
   unsigned attempt = 0;
   unsigned try = item_hash(item_key, item_key_len, attempt);
-
-  ht_item_t *base = (ht_item_t *)ht;
-  const ht_item_t *item = &base[try];
-
-  if (item == NULL) {
-    fprintf(stderr, "i.sh: ht no item at index, code: %d", ERRHTNOITEM);
-    exit(ERRHTNOITEM);
-  }
-
-  void *handler = NULL;
-  char *string = NULL;
+  /*
+   ht_item_t *base = (ht_item_t *)ht;
+   const ht_item_t *item = &base[try];
+ */
 
   while (1) {
+    try = item_hash(item_key, item_key_len, attempt);
+    const ht_item_t *item = ht->items[try];
+    if (item == NULL) {
+      fprintf(stderr, "i.sh: ht no item at index, code: %d", ERRHTNOITEM);
+      exit(ERRHTNOITEM);
+    }
+
+    void *handler = NULL;
+    char *string = NULL;
+
     if (attempt == HT_MAX - 1) {
       return NULL;
       break;
@@ -90,8 +93,6 @@ STATIC const ht_item_t *item_lookup_slot(const ht_table_t ht,
     }
     attempt++;
     // retry step by 1
-    try = item_hash(item_key, item_key_len, attempt);
-    item = &base[try];
   }
   return NULL;
 }
