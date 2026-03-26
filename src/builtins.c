@@ -1,4 +1,5 @@
 #include "builtins.h"
+#include "errors.h"
 #include "ht.h"
 #include "shell.h"
 #include <stdio.h>
@@ -48,12 +49,12 @@ handler_t bt_get_fn(ht_table_t table, char *key) {
 }
 
 int bt_is_builtin(char *key) {
-  builtin_t table = shell_state_get_builtin_table();
+  ht_table_t table = shell_state_get_builtin_table();
   handler_t hd = bt_get_fn(table, key);
   if (hd != NULL) {
-    return IS;
+    return MATCH;
   }
-  return !IS;
+  return !MATCH;
 }
 
 size_t bt_get_fn_count(void) {
