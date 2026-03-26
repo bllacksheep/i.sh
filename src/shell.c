@@ -10,9 +10,13 @@
 
 #define MAX_INPUT_STREAM 100
 #define MAX_ARGV_LENGTH 10
+#define MAX_TOKEN_LENGTH 10
 
+// tokens will need cleared after each input, how best to handle this in state
+// should tokenv and argv be part of state if transient, means I don't have
+// to manage it per input stream
 typedef struct ish_state {
-  semantic_token_t **token_vector;
+  semantic_token_t *token_vector[MAX_TOKEN_LENGTH];
   size_t token_vec_count;
   size_t iterator_x; // user provided at cli
   size_t iterator_i; // shell builtin 1
