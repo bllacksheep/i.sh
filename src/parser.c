@@ -12,6 +12,7 @@
 
 #define TOKEN_MAX_LEN 100
 #define TOKEN_MAX_COUNT 100
+#define MAX_TOKEN_CAPTURE_LEN 20
 
 typedef struct parse_state parse_state_t;
 
@@ -157,7 +158,7 @@ void parser_create_tokens(const char *buf, semantic_token_t **tokenv,
   }
 
   semantic_token_t **token_vec = tokenv;
-  char capture[+1] = {0};
+  char capture[MAX_TOKEN_CAPTURE_LEN + 1] = {0};
   const char *p = buf;
   size_t argc = 0;
 
