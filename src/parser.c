@@ -42,7 +42,8 @@ void parser_set_token_val(char *, semantic_token_t *);
 int is_expression(char *);
 int is_command(char *);
 int is_builtin(char *);
-void parser_promote_tokens_to_argv(size_t *, char **, semantic_token_t **);
+void parser_promote_tokens_to_argv(size_t *, char **, size_t,
+                                   semantic_token_t **);
 void parser_init_token_table(ht_table_t);
 
 void has_iterator(const parse_state_t s) {
@@ -363,9 +364,9 @@ void parser_evaluate_expressions(size_t argc, semantic_token_t **tokenv) {
   }
 }
 
-void parser_promote_tokens_to_argv(size_t *argc, char **argv,
+void parser_promote_tokens_to_argv(size_t *argc, char **argv, size_t tc,
                                    semantic_token_t **tokenv) {
-  if (*argc == 0) {
+  if (tc == 0) {
     err_exit("no token count when creating arg vector", ERRNOTOKENCOUNT);
   }
   if (argv == NULL) {
@@ -379,7 +380,7 @@ void parser_promote_tokens_to_argv(size_t *argc, char **argv,
   // counts commands only
   size_t cmdc = 0;
 
-  for (int i = 0; i < *argc; i++) {
+  for (int i = 0; i < tc; i++) {
     if (tokenv[i] == NULL) {
       err_exit("no token when creating arg vector", ERRNOTOKEN);
     }
@@ -414,7 +415,7 @@ void parser_simple_parser(const char *buf) {
   semantic_token_t **tvec = shell_state_get_token_vector();
   parser_create_tokens(input, tvec, &tc);
   parser_evaluate_expressions(tc, tvec);
-  parser_promote_tokens_to_argv(&argc, argv, tvec);
+  parser_promote_tokens_to_argv(&argc, argv, tc, tvec);
 
   // not set up yet
   size_t i = 0;
